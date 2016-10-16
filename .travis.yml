@@ -7,8 +7,10 @@ scala:
 jdk:
   - oraclejdk8
   
-  
 branches:
   only:
   - master
   - develop
+
+after_success:
+  bash <(curl -s https://codecov.io/bash)
