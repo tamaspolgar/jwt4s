@@ -6,20 +6,21 @@ import javax.crypto.spec.SecretKeySpec
 import cats.data.Xor
 import com.menzus.jwt4s.SignerSettings
 import com.menzus.jwt4s.VerifierSettings
+import com.menzus.jwt4s.error.InvalidAlgHeader
 import com.menzus.jwt4s.error.InvalidSignature
 
 sealed trait Algorithm
 
 sealed abstract class Hs(javaMacAlgName: String) extends Algorithm {
 
-  final def sign(message: String, hmacSecretKey: Array[Byte]): Result[String] = {
+  final def sign(message: String, hmacSecretKey: Array[Byte]): String = {
     val key = new SecretKeySpec(hmacSecretKey, javaMacAlgName)
 
     val mutableMac = Mac.getInstance(javaMacAlgName)
     mutableMac.init(key)
     mutableMac.update(bytesFromString(message))
 
-    Xor.Right(base64FromBytes(mutableMac.doFinal))
+    base64FromBytes(mutableMac.doFinal)
   }
 
   final def verify(message: String, providedSignatureBase64: String, hmacSecretKey: Array[Byte]): Result[String] = {
@@ -52,7 +53,7 @@ case object Hs512 extends Hs("HmacSHA512")
 
 object Algorithm {
 
-  def createSignature(header: Header, headerBase64: String, payloadBase64: String)(implicit settings: SignerSettings): Result[String] = {
+  def createSignature(header: Header, headerBase64: String, payloadBase64: String)(implicit settings: SignerSettings): String = {
     val unsignedToken = asUnsignedToken(headerBase64, payloadBase64)
 
     header match {
@@ -66,6 +67,19 @@ object Algorithm {
     header match {
       case HsHeader(alg) => hsVerify(alg, unsignedToken, signatureBase64, settings.hmacSecretKey)
     }
+  }
+
+  private[jwt4s] def algHeaderToAlgorithm(alg: String) = alg match {
+    case "HS256" => Xor.Right(Hs256)
+    case "HS384" => Xor.Right(Hs384)
+    case "HS512" => Xor.Right(Hs512)
+    case _       => Xor.Left(InvalidAlgHeader(alg))
+  }
+
+  private[jwt4s] def algorithmToAlgHeader(algorithm: Algorithm) = algorithm match {
+    case Hs256 => "HS256"
+    case Hs384 => "HS384"
+    case Hs512 => "HS512"
   }
 
   private def asUnsignedToken(headerBase64: String, payloadBase64: String) = {

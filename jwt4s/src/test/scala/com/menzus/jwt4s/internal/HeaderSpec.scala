@@ -61,57 +61,50 @@ class HeaderSpec extends WordSpec with Matchers {
 
     "reject header with unaccepted alg" in {
 
-      val onlyHs384 = settings.copy(acceptedAlgHeaders = Set("HS256"))
+      val onlyHs384 = settings.copy(acceptedAlgHeaders = Set(Hs256))
 
       verifyAndExtractHeader(asBase64("""{"alg":"HS384","typ":"JWT"}"""))(onlyHs384) shouldBe
-        Xor.Left(UnacceptedAlgHeader("HS384"))
+        Xor.Left(UnacceptedAlgHeader(Hs384))
     }
 
-    "reject header with unsupported alg" in {
+      "reject header with unsupported alg" in {
 
-      val unsupported = settings.copy(acceptedAlgHeaders = Set("unsupported"))
-
-      verifyAndExtractHeader(asBase64("""{"alg":"unsupported","typ":"JWT"}"""))(unsupported) shouldBe
-        Xor.Left(InvalidAlgHeader("unsupported"))
-    }
+        verifyAndExtractHeader(asBase64("""{"alg":"unsupported","typ":"JWT"}""")) shouldBe
+          Xor.Left(InvalidAlgHeader("unsupported"))
+      }
 
     "reject header with wrong typ field" in {
 
       verifyAndExtractHeader(asBase64("""{"alg":"HS256","typ":"non-JWT"}""")) shouldBe
         Xor.Left(InvalidTypInHeader("non-JWT"))
     }
+  }
 
-    "createHeader" should {
+  "createHeader" should {
 
-      "create hs header for HS256" in {
+    "create hs header for HS256" in {
 
-        createHeader("HS256") shouldBe Xor.Right(HsHeader(Hs256))
-      }
-
-      "create hs header for HS384" in {
-
-        createHeader("HS384") shouldBe Xor.Right(HsHeader(Hs384))
-      }
-
-      "create hs header for HS512" in {
-
-        createHeader("HS512") shouldBe Xor.Right(HsHeader(Hs512))
-      }
-
-      "reject for unknown alg" in {
-
-        createHeader("unknown") shouldBe Xor.Left(InvalidAlgHeader("unknown"))
-      }
+      createHeader(Hs256) shouldBe HsHeader(Hs256)
     }
 
-    "createHeaderBase64" should {
+    "create hs header for HS384" in {
 
-      "encode the header" in {
+      createHeader(Hs384) shouldBe HsHeader(Hs384)
+    }
 
-        asHeaderBase64(HsHeader(Hs256)) shouldBe Xor.Right(asBase64("""{"alg":"HS256","typ":"JWT"}"""))
-        asHeaderBase64(HsHeader(Hs384)) shouldBe Xor.Right(asBase64("""{"alg":"HS384","typ":"JWT"}"""))
-        asHeaderBase64(HsHeader(Hs512)) shouldBe Xor.Right(asBase64("""{"alg":"HS512","typ":"JWT"}"""))
-      }
+    "create hs header for HS512" in {
+
+      createHeader(Hs512) shouldBe HsHeader(Hs512)
+    }
+  }
+
+  "createHeaderBase64" should {
+
+    "encode the header" in {
+
+      asHeaderBase64(HsHeader(Hs256)) shouldBe asBase64("""{"alg":"HS256","typ":"JWT"}""")
+      asHeaderBase64(HsHeader(Hs384)) shouldBe asBase64("""{"alg":"HS384","typ":"JWT"}""")
+      asHeaderBase64(HsHeader(Hs512)) shouldBe asBase64("""{"alg":"HS512","typ":"JWT"}""")
     }
   }
 }

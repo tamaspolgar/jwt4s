@@ -4,6 +4,7 @@ import cats.data.Xor
 import com.menzus.jwt4s.error.ExpiredExpClaim
 import com.menzus.jwt4s.error.FutureIatClaim
 import com.menzus.jwt4s.error.FutureNbfClaim
+import com.menzus.jwt4s.error.InvalidAlgHeader
 import com.menzus.jwt4s.error.InvalidAudClaim
 import com.menzus.jwt4s.error.InvalidIssClaim
 import com.menzus.jwt4s.error.InvalidSignature
@@ -63,7 +64,7 @@ class VerifierSpec extends WordSpec with Matchers {
           asBase64("""{"sub":"subject","aud":"audience","iss":"issuer","iat":-1,"nbf":-1,"exp":1}""") + "." +
           "notchecked"
       ) shouldBe
-        Xor.Left(UnacceptedAlgHeader("RS256"))
+        Xor.Left(InvalidAlgHeader("RS256"))
     }
 
     "reject JWT with invalid audience claim" in {

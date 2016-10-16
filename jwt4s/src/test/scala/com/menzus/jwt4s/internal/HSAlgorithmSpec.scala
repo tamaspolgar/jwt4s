@@ -19,7 +19,7 @@ class HSAlgorithmSpec extends WordSpec with Matchers {
         HsHeader(Hs256),
         Hs256Header,
         Payload
-      ) shouldBe Xor.Right(ValidSignatureHS256)
+      ) shouldBe ValidSignatureHS256
     }
 
     "create valid HS384 signature" in {
@@ -28,7 +28,7 @@ class HSAlgorithmSpec extends WordSpec with Matchers {
         HsHeader(Hs384),
         Hs384Header,
         Payload
-      ) shouldBe Xor.Right(ValidSignatureHS384)
+      ) shouldBe ValidSignatureHS384
     }
 
     "create valid HS512 signature" in {
@@ -37,7 +37,7 @@ class HSAlgorithmSpec extends WordSpec with Matchers {
         HsHeader(Hs512),
         Hs512Header,
         Payload
-      ) shouldBe Xor.Right(ValidSignatureHS512)
+      ) shouldBe ValidSignatureHS512
     }
   }
 

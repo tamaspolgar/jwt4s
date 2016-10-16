@@ -31,7 +31,7 @@ case class Claims(
 
 object Payload {
 
-  def createClaimsFor(subject: String)(implicit settings: SignerSettings, clock: Clock): Result[String] = {
+  def createClaimsFor(subject: String)(implicit settings: SignerSettings, clock: Clock): String = {
     val nowInS = clock.nowInS
 
     val claims = Json.obj(
@@ -42,7 +42,7 @@ object Payload {
       "nbf" -> Json.fromLong(nowInS),
       "iat" -> Json.fromLong(nowInS)
     )
-    Xor.Right(asBase64(claims.noSpaces))
+    asBase64(claims.noSpaces)
   }
 
   def verifyAndExtractClaims(payloadBase64: String)(implicit settings: VerifierSettings, clock: Clock): Result[Claims] = {

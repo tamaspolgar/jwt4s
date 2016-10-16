@@ -28,7 +28,7 @@ class ClaimsSpec extends WordSpec with Matchers {
     "create claims for the subject and the verifier config" in {
 
       createClaimsFor("subject") shouldBe
-        Xor.Right(asBase64("""{"iss":"issuer","sub":"subject","aud":"audience","exp":1,"nbf":0,"iat":0}"""))
+        asBase64("""{"iss":"issuer","sub":"subject","aud":"audience","exp":1,"nbf":0,"iat":0}""")
     }
   }
 

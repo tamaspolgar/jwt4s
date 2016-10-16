@@ -1,5 +1,7 @@
 package com.menzus.jwt4s.error
 
+import com.menzus.jwt4s.internal.Algorithm
+
 sealed trait Error
 
 case object InvalidStructure extends Error
@@ -9,8 +11,8 @@ case class FailedToParseHeader(header: String) extends Error
 case class UnacceptedFieldsInHeader(unacceptedFields: Set[String]) extends Error
 
 case class InvalidTypInHeader(typ: String) extends Error
-case class UnacceptedAlgHeader(alg: String) extends Error
 case class InvalidAlgHeader(alg: String) extends Error
+case class UnacceptedAlgHeader(alg: Algorithm) extends Error
 
 case object InvalidSignature extends Error
 
