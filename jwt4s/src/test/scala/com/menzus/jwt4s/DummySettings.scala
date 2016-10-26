@@ -12,7 +12,7 @@ object DummySettings {
     algorithm = Hs256,
     audience = "audience",
     issuer = "issuer",
-    maxAgeInS = 1
+    expiresInS = 1
   )
 
   val verifierSettings = VerifierSettings(
@@ -22,7 +22,6 @@ object DummySettings {
     issuer = "issuer",
     acceptedAlgHeaders = Set(Hs256, Hs384, Hs512),
     expToleranceInS = 1,
-    iatToleranceInS = 1,
-    nbfToleranceInS = 1
+    iatToleranceInS = 1
   )
 }

@@ -7,6 +7,7 @@ class Settings private (val realm: String)
 
 object Settings {
 
+  //TODO is this needed?
   def apply(): Settings = {
     apply(ConfigFactory.load)
   }

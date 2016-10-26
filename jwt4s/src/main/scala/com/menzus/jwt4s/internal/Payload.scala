@@ -7,14 +7,12 @@ import com.menzus.jwt4s.VerifierSettings
 import com.menzus.jwt4s.error.ExpiredExpClaim
 import com.menzus.jwt4s.error.FailedToParseClaims
 import com.menzus.jwt4s.error.FutureIatClaim
-import com.menzus.jwt4s.error.FutureNbfClaim
 import com.menzus.jwt4s.error.InvalidAudClaim
 import com.menzus.jwt4s.error.InvalidIssClaim
 import com.menzus.jwt4s.error.NoAudClaimProvided
 import com.menzus.jwt4s.error.NoExpClaimProvided
 import com.menzus.jwt4s.error.NoIatClaimProvided
 import com.menzus.jwt4s.error.NoIssClaimProvided
-import com.menzus.jwt4s.error.NoNbfClaimProvided
 import com.menzus.jwt4s.error.NoSubClaimProvided
 import io.circe.Decoder
 import io.circe.Json
@@ -25,7 +23,6 @@ case class Claims(
   sub: String,
   aud: String,
   exp: Long,
-  nbf: Long,
   iat: Long
 )
 
@@ -38,8 +35,7 @@ object Payload {
       "iss" -> Json.fromString(settings.issuer),
       "sub" -> Json.fromString(subject),
       "aud" -> Json.fromString(settings.audience),
-      "exp" -> Json.fromLong(nowInS + settings.maxAgeInS),
-      "nbf" -> Json.fromLong(nowInS),
+      "exp" -> Json.fromLong(nowInS + settings.expiresInS),
       "iat" -> Json.fromLong(nowInS)
     )
     asBase64(claims.noSpaces)
@@ -54,9 +50,8 @@ object Payload {
       sub    <- verifySub(claims.sub)
       aud    <- verifyAud(claims.aud, settings.audience)
       exp    <- verifyExp(claims.exp, settings.expToleranceInS, nowInS)
-      nbf    <- verifyNbf(claims.nbf, settings.nbfToleranceInS, nowInS)
       iat    <- verifyIat(claims.iat, settings.iatToleranceInS, nowInS)
-    } yield Claims(iss, sub, aud, exp, nbf, iat)
+    } yield Claims(iss, sub, aud, exp, iat)
   }
 
   private case class RawClaims(
@@ -64,7 +59,6 @@ object Payload {
     sub: Option[String],
     aud: Option[String],
     exp: Option[Long],
-    nbf: Option[Long],
     iat: Option[Long]
   )
 
@@ -74,9 +68,8 @@ object Payload {
       sub <- c.downField("sub").as[Option[String]]
       aud <- c.downField("aud").as[Option[String]]
       exp <- c.downField("exp").as[Option[Long]]
-      nbf <- c.downField("nbf").as[Option[Long]]
       iat <- c.downField("iat").as[Option[Long]]
-    } yield RawClaims(iss, sub, aud, exp, nbf, iat)
+    } yield RawClaims(iss, sub, aud, exp, iat)
   }
 
   private def decodeClaims(payloadBase64: String): Result[RawClaims] = for {
@@ -102,11 +95,6 @@ object Payload {
     exp <- Xor.fromOption(exp, NoExpClaimProvided)
     _   <- Xor.fromOption(Some(exp).filter(exp => nowInS <= (exp + tolerance)), ExpiredExpClaim(exp, nowInS))
   } yield exp
-
-  private def verifyNbf(nbf: Option[Long], tolerance: Long, nowInS: Long): Result[Long] = for {
-    nbf <- Xor.fromOption(nbf, NoNbfClaimProvided)
-    _   <- Xor.fromOption(Some(nbf).filter(iat => (nbf - tolerance) <= nowInS), FutureNbfClaim(nbf, nowInS))
-  } yield nbf
 
   private def verifyIat(iat: Option[Long], tolerance: Long, nowInS: Long): Result[Long] = for {
     iat <- Xor.fromOption(iat, NoIatClaimProvided)

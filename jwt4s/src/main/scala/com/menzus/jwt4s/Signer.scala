@@ -7,8 +7,10 @@ import com.menzus.jwt4s.internal.Result
 import com.menzus.jwt4s.internal.Payload.createClaimsFor
 
 trait Signer {
-  def signTokenFor(subject: String): String
+  def signTokenFor(subject: String): Token
 }
+
+case class Token(idToken: String, expiresIn: Long)
 
 object Signer {
 
@@ -17,16 +19,15 @@ object Signer {
     implicit val _settings = settings
     implicit val _clock = clock
 
-    def signTokenFor(subject: String): String = {
+    def signTokenFor(subject: String): Token = {
       val header = createHeader(settings.algorithm)
       val headerBase64 = asHeaderBase64(header)
       val claimsBase64 = createClaimsFor(subject)
       val signatureBase64 = createSignature(header, headerBase64, claimsBase64)
 
-      concat(
-        headerBase64,
-        claimsBase64,
-        signatureBase64
+      Token(
+        idToken = concat(headerBase64, claimsBase64, signatureBase64),
+        expiresIn = settings.expiresInS
       )
     }
 

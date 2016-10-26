@@ -7,7 +7,7 @@ trait Clock {
 }
 
 object Clock {
-  val system = new Clock {
+  val systemClock = new Clock {
     def nowInMs(): Long = System.currentTimeMillis
   }
 }

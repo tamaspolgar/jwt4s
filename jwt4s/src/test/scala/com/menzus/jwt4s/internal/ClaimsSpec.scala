@@ -6,7 +6,6 @@ import com.menzus.jwt4s.DummySettings
 import com.menzus.jwt4s.error.ExpiredExpClaim
 import com.menzus.jwt4s.error.FailedToParseClaims
 import com.menzus.jwt4s.error.FutureIatClaim
-import com.menzus.jwt4s.error.FutureNbfClaim
 import com.menzus.jwt4s.error.InvalidAudClaim
 import com.menzus.jwt4s.error.InvalidBase64Format
 import com.menzus.jwt4s.error.InvalidIssClaim
@@ -14,7 +13,6 @@ import com.menzus.jwt4s.error.NoAudClaimProvided
 import com.menzus.jwt4s.error.NoExpClaimProvided
 import com.menzus.jwt4s.error.NoIatClaimProvided
 import com.menzus.jwt4s.error.NoIssClaimProvided
-import com.menzus.jwt4s.error.NoNbfClaimProvided
 import com.menzus.jwt4s.error.NoSubClaimProvided
 import com.menzus.jwt4s.internal.Payload.createClaimsFor
 import com.menzus.jwt4s.internal.Payload.verifyAndExtractClaims
@@ -28,7 +26,7 @@ class ClaimsSpec extends WordSpec with Matchers {
     "create claims for the subject and the verifier config" in {
 
       createClaimsFor("subject") shouldBe
-        asBase64("""{"iss":"issuer","sub":"subject","aud":"audience","exp":1,"nbf":0,"iat":0}""")
+        asBase64("""{"iss":"issuer","sub":"subject","aud":"audience","exp":1,"iat":0}""")
     }
   }
 
@@ -37,14 +35,13 @@ class ClaimsSpec extends WordSpec with Matchers {
     "accept and return valid claims" in {
 
       verifyAndExtractClaims(
-        asBase64(s"""{"aud":"audience","sub":"subject","iss":"issuer","iat":$TMinus1,"nbf":$TMinus1,"exp":$TPlus1}""")
+        asBase64(s"""{"aud":"audience","sub":"subject","iss":"issuer","iat":$TMinus1,"exp":$TPlus1}""")
       ) shouldBe Xor.Right(
         Claims(
           iss = "issuer",
           sub = "subject",
           aud = "audience",
           exp = TPlus1,
-          nbf = TMinus1,
           iat = TMinus1
         )
       )
@@ -53,46 +50,29 @@ class ClaimsSpec extends WordSpec with Matchers {
     "accept iat within the tolerance" in {
 
       verifyAndExtractClaims(
-        asBase64(s"""{"aud":"audience","sub":"subject","iss":"issuer","iat":$TPlus1,"nbf":$T0,"exp":$TPlus2}""")
+        asBase64(s"""{"aud":"audience","sub":"subject","iss":"issuer","iat":$TPlus1,"exp":$TPlus2}""")
       ) shouldBe Xor.Right(
         Claims(
           iss = "issuer",
           sub = "subject",
           aud = "audience",
           exp = TPlus2,
-          nbf = T0,
           iat = TPlus1
         )
       )
     }
 
-    "accept nbf within the tolerance" in {
-
-      verifyAndExtractClaims(
-        asBase64(s"""{"aud":"audience","sub":"subject","iss":"issuer","iat":$T0,"nbf":$TPlus1,"exp":$TPlus2}""")
-      ) shouldBe Xor.Right(
-        Claims(
-          iss = "issuer",
-          sub = "subject",
-          aud = "audience",
-          exp = TPlus2,
-          nbf = TPlus1,
-          iat = T0
-        )
-      )
-    }
 
     "accept exp within the tolerance" in {
 
       verifyAndExtractClaims(
-        asBase64(s"""{"aud":"audience","sub":"subject","iss":"issuer","iat":$TMinus2,"nbf":$TMinus2,"exp":$TMinus1}""")
+        asBase64(s"""{"aud":"audience","sub":"subject","iss":"issuer","iat":$TMinus2,"exp":$TMinus1}""")
       ) shouldBe Xor.Right(
         Claims(
           iss = "issuer",
           sub = "subject",
           aud = "audience",
           exp = TMinus1,
-          nbf = TMinus2,
           iat = TMinus2
         )
       )
@@ -110,71 +90,58 @@ class ClaimsSpec extends WordSpec with Matchers {
 
     "reject header with missing subject" in {
 
-      verifyAndExtractClaims(asBase64(s"""{"aud":"audience","iss":"issuer","iat":-1,"nbf":0,"exp":1}""")) shouldBe
+      verifyAndExtractClaims(asBase64(s"""{"aud":"audience","iss":"issuer","iat":-1,"exp":1}""")) shouldBe
         Xor.Left(NoSubClaimProvided)
     }
 
     "reject header with missing audience" in {
 
-      verifyAndExtractClaims(asBase64(s"""{"sub":"subject","iss":"issuer","iat":-1,"nbf":0,"exp":1}""")) shouldBe
+      verifyAndExtractClaims(asBase64(s"""{"sub":"subject","iss":"issuer","iat":-1,"exp":1}""")) shouldBe
         Xor.Left(NoAudClaimProvided)
     }
 
     "reject header with wrong audience" in {
 
-      verifyAndExtractClaims(asBase64(s"""{"aud":"other audience","sub":"subject","iss":"issuer","iat":-1,"nbf":0,"exp":1}""")) shouldBe
+      verifyAndExtractClaims(asBase64(s"""{"aud":"other audience","sub":"subject","iss":"issuer","iat":-1,"exp":1}""")) shouldBe
         Xor.Left(InvalidAudClaim("other audience"))
     }
 
     "reject header with missing issuer" in {
 
-      verifyAndExtractClaims(asBase64(s"""{"aud":"audience","sub":"subject","iat":-1,"nbf":0,"exp":1}""")) shouldBe
+      verifyAndExtractClaims(asBase64(s"""{"aud":"audience","sub":"subject","iat":-1,"exp":1}""")) shouldBe
         Xor.Left(NoIssClaimProvided)
     }
 
     "reject header with wrong issuer" in {
 
-      verifyAndExtractClaims(asBase64(s"""{"aud":"audience","sub":"subject","iss":"other issuer","iat":-1,"nbf":0,"exp":1}""")) shouldBe
+      verifyAndExtractClaims(asBase64(s"""{"aud":"audience","sub":"subject","iss":"other issuer","iat":-1,"exp":1}""")) shouldBe
         Xor.Left(InvalidIssClaim("other issuer"))
     }
 
     "reject header with missing exp" in {
 
-      verifyAndExtractClaims(asBase64(s"""{"aud":"audience","sub":"subject","iss":"issuer","iat":-1,"nbf":0}""")) shouldBe
+      verifyAndExtractClaims(asBase64(s"""{"aud":"audience","sub":"subject","iss":"issuer","iat":-1}""")) shouldBe
         Xor.Left(NoExpClaimProvided)
     }
 
     "reject header with out of tolerance expired exp" in {
 
       verifyAndExtractClaims(
-        asBase64(s"""{"aud":"audience","sub":"subject","iss":"issuer","iat":$TMinus3,"nbf":$TMinus3,"exp":$TMinus2}""")) shouldBe
+        asBase64(s"""{"aud":"audience","sub":"subject","iss":"issuer","iat":$TMinus3,"exp":$TMinus2}""")) shouldBe
         Xor.Left(ExpiredExpClaim(TMinus2, T0))
     }
 
     "reject header with missing iat" in {
 
-      verifyAndExtractClaims(asBase64(s"""{"aud":"audience","sub":"subject","iss":"issuer","nbf":0,"exp":1}""")) shouldBe
+      verifyAndExtractClaims(asBase64(s"""{"aud":"audience","sub":"subject","iss":"issuer","exp":$TPlus1}""")) shouldBe
         Xor.Left(NoIatClaimProvided)
     }
 
     "reject header with out of tolerance future iat" in {
 
       verifyAndExtractClaims(
-        asBase64(s"""{"aud":"audience","sub":"subject","iss":"issuer","iat":$TPlus2,"nbf":$TPlus1,"exp":$TPlus3}""")) shouldBe
+        asBase64(s"""{"aud":"audience","sub":"subject","iss":"issuer","iat":$TPlus2,"exp":$TPlus3}""")) shouldBe
         Xor.Left(FutureIatClaim(TPlus2, T0))
-    }
-
-    "reject header with missing nbf" in {
-
-      verifyAndExtractClaims(asBase64(s"""{"aud":"audience","sub":"subject","iss":"issuer","iat":0,"exp":10}""")) shouldBe
-        Xor.Left(NoNbfClaimProvided)
-    }
-
-    "reject header with out of tolerance future nbf" in {
-
-      verifyAndExtractClaims(
-        asBase64(s"""{"aud":"audience","sub":"subject","iss":"issuer","iat":$T0,"nbf":$TPlus2,"exp":$TPlus3}""")) shouldBe
-        Xor.Left(FutureNbfClaim(TPlus2, T0))
     }
   }
 

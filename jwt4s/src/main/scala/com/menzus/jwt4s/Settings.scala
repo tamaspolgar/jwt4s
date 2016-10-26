@@ -1,13 +1,8 @@
 package com.menzus.jwt4s
 
-import cats.data.Xor
-import com.menzus.jwt4s.error.InvalidAlgHeader
 import com.menzus.jwt4s.internal.Algorithm
-import com.menzus.jwt4s.internal.Hs256
-import com.menzus.jwt4s.internal.Hs384
-import com.menzus.jwt4s.internal.Hs512
-import com.menzus.jwt4s.internal.extractBytesFromBase64
 import com.menzus.jwt4s.internal.Algorithm.algHeaderToAlgorithm
+import com.menzus.jwt4s.internal.extractBytesFromBase64
 import com.typesafe.config.Config
 import com.typesafe.config.ConfigException.BadValue
 import com.typesafe.config.ConfigFactory
@@ -19,11 +14,12 @@ case class SignerSettings(
   algorithm: Algorithm,
   audience: String,
   issuer: String,
-  maxAgeInS: Long
+  expiresInS: Long
 )
 
 object SignerSettings {
 
+  //TODO is this needed?
   def apply(): SignerSettings = {
     apply(ConfigFactory.load)
   }
@@ -36,7 +32,7 @@ object SignerSettings {
       algorithm = Settings.asAlgorithm(jwtConfig.getString("algorithm"), "algorithm"),
       audience = jwtConfig.getString("audience"),
       issuer = jwtConfig.getString("issuer"),
-      maxAgeInS = jwtConfig.getDuration("max-age").getSeconds
+      expiresInS = jwtConfig.getDuration("expires-in").getSeconds
     )
   }
 }
@@ -47,16 +43,21 @@ case class VerifierSettings (
   val issuer: String,
   val acceptedAlgHeaders: Set[Algorithm],
   val expToleranceInS: Long,
-  val iatToleranceInS: Long,
-  val nbfToleranceInS: Long
+  val iatToleranceInS: Long
 )
 
 object VerifierSettings {
 
+  //TODO is this needed?
   def apply(): VerifierSettings = {
     apply(ConfigFactory.load)
   }
 
+  def apply(resource: String): VerifierSettings = {
+    apply(ConfigFactory.load(resource))
+  }
+
+  //todo is this needed like this?
   def apply(config: Config): VerifierSettings = {
     val jwtConfig = Settings.jwtConfig(config)
 
@@ -67,8 +68,7 @@ object VerifierSettings {
       acceptedAlgHeaders = jwtConfig.getStringList("accepted-alg-headers").toSet[String]
         .map(alg => Settings.asAlgorithm(alg, "accepted-alg-headers")),
       expToleranceInS = jwtConfig.getDuration("exp.tolerance").getSeconds,
-      iatToleranceInS = jwtConfig.getDuration("iat.tolerance").getSeconds,
-      nbfToleranceInS = jwtConfig.getDuration("nbf.tolerance").getSeconds
+      iatToleranceInS = jwtConfig.getDuration("iat.tolerance").getSeconds
     )
   }
 }

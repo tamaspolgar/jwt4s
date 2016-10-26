@@ -79,7 +79,7 @@ class HSAlgorithmSpec extends WordSpec with Matchers {
         HsHeader(Hs256),
         Hs256Header,
         Payload,
-        InvalidSignature
+        InvalidSignatureHS256
       ) shouldBe Xor.Left(error.InvalidSignature)
     }
   }
@@ -98,5 +98,5 @@ class HSAlgorithmSpec extends WordSpec with Matchers {
   val ValidSignatureHS384 = "rEoTI6HSPMfbVLZtC3PD_h3lU4FRiNCxfQVf0gB7Cr_mZdWclpptQR3zikoJAL2A"
   val ValidSignatureHS512 = "WvikGjdf76l4wOrtuUfHmLi_h6atykfwnmUFrUQRDZ5YJwdDgMXoqiSTQim9XHI6xCVhaGkrPlRAFwkoUJOWUQ"
 
-  val InvalidSignature = "invalid_signature"
+  val InvalidSignatureHS256 = "IzOEkLAHxQpn5ksibrxzITy_5dJFY7Op2mrfCNOrUcv"
 }

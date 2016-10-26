@@ -32,7 +32,4 @@ case class ExpiredExpClaim(exp: Long, current: Long) extends Error
 case object NoIatClaimProvided extends Error
 case class FutureIatClaim(iat: Long, current: Long) extends Error
 
-case object NoNbfClaimProvided extends Error
-case class FutureNbfClaim(nbf: Long, current: Long) extends Error
-
 case class FailedToParsePayload(payload: String) extends Error

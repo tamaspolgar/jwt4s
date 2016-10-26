@@ -17,7 +17,7 @@ class SettingsSpec extends WordSpec with Matchers {
       signerSettings.algorithm shouldBe Hs256
       signerSettings.audience shouldBe "theAudience"
       signerSettings.issuer shouldBe "theIssuer"
-      signerSettings.maxAgeInS shouldBe 3600
+      signerSettings.expiresInS shouldBe 3600
     }
 
     "fail if the hmac secret is not a valid base 64 string" in {
@@ -63,7 +63,6 @@ class SettingsSpec extends WordSpec with Matchers {
       verifierSettings.acceptedAlgHeaders shouldBe Set(Hs256)
       verifierSettings.expToleranceInS shouldBe 60
       verifierSettings.iatToleranceInS shouldBe 60
-      verifierSettings.nbfToleranceInS shouldBe 60
     }
 
     "fail if the hmac secret is not a valid base 64 string" in {

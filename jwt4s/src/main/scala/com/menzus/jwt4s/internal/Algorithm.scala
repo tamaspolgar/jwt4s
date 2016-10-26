@@ -9,6 +9,8 @@ import com.menzus.jwt4s.VerifierSettings
 import com.menzus.jwt4s.error.InvalidAlgHeader
 import com.menzus.jwt4s.error.InvalidSignature
 
+import scala.annotation.tailrec
+
 sealed trait Algorithm
 
 sealed abstract class Hs(javaMacAlgName: String) extends Algorithm {
@@ -31,7 +33,7 @@ sealed abstract class Hs(javaMacAlgName: String) extends Algorithm {
     mutableMac.update(bytesFromString(message))
     val calculatedSignatureBase64 = base64FromBytes(mutableMac.doFinal)
 
-    if (calculatedSignatureBase64 == providedSignatureBase64) {
+    if (secureDigestEquals(calculatedSignatureBase64, providedSignatureBase64)) {
       Xor.Right(providedSignatureBase64)
     } else {
       Xor.Left(InvalidSignature)
@@ -44,6 +46,27 @@ sealed abstract class Hs(javaMacAlgName: String) extends Algorithm {
 
   private def base64FromBytes(bytes: Array[Byte]): String = {
     Base64Encoder.encodeToString(bytes)
+  }
+
+  private def secureDigestEquals(s1: String, s2: String): Boolean = {
+
+    @tailrec
+    def secureDigestEquals(b1: Array[Byte], b2: Array[Byte], index: Int, acc: Int): Boolean = {
+      if (index < b1.length) {
+        secureDigestEquals(b1, b2, index + 1, acc | (b1(index) ^ b2(index)))
+      } else {
+        acc == 0
+      }
+    }
+
+    val b1 = s1.getBytes(UTF8)
+    val b2 = s2.getBytes(UTF8)
+
+    if (b1.length == b2.length) {
+      secureDigestEquals(b1, b2, 0, 0)
+    } else {
+      false
+    }
   }
 }
 
