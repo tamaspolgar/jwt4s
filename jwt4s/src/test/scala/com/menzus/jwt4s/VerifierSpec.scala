@@ -20,8 +20,8 @@ class VerifierSpec extends WordSpec with Matchers {
 
       verifier.verifyAndExtract(
         asBase64("""{"alg":"HS256","typ":"JWT"}""") + "." +
-        asBase64("""{"sub":"subject","aud":"audience","iss":"issuer","iat":-1,"exp":1}""") + "." +
-        "eY0F-uu7NGQ6s3uqNU1xmcHFD7cxhWf7KWk1H_sEAbI"
+        asBase64("""{"sub":"subject","aud":"audience","iss":"issuer","iat":-1,"exp":1,"scopes":["admin"]}""") + "." +
+        "8KUvy2hq44bBpJTOeg6-YYsmpjjIXpo3Gat1oEJKqbs"
       ) shouldBe
         Xor.Right(
           Claims(
@@ -29,7 +29,8 @@ class VerifierSpec extends WordSpec with Matchers {
             sub = "subject",
             aud = "audience",
             exp = 1,
-            iat = -1
+            iat = -1,
+            scopes = Set("admin")
           )
         )
     }
@@ -49,7 +50,7 @@ class VerifierSpec extends WordSpec with Matchers {
       verifier.verifyAndExtract(
         asBase64("""{"alg":"HS256","typ":"JWT"}""") + "." +
           asBase64("""{"sub":"subject","aud":"audience","iss":"invalid issuer","iat":-1,"exp":1}""") + "." +
-          "TWEAKED_0_klnp20CTexcAm_foJ9ET8ZELjar5exlsw"
+          "iTj561xPCI-ctiT9zzyj5OB86u5tEJFY7KHc8Dce42s"
       )  shouldBe
         Xor.Left(InvalidIssClaim("invalid issuer"))
     }

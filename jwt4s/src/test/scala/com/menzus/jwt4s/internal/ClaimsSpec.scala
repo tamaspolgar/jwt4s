@@ -35,14 +35,15 @@ class ClaimsSpec extends WordSpec with Matchers {
     "accept and return valid claims" in {
 
       verifyAndExtractClaims(
-        asBase64(s"""{"aud":"audience","sub":"subject","iss":"issuer","iat":$TMinus1,"exp":$TPlus1}""")
+        asBase64(s"""{"aud":"audience","sub":"subject","iss":"issuer","iat":$TMinus1,"exp":$TPlus1,"scopes":["scope1","scope2"]}""")
       ) shouldBe Xor.Right(
         Claims(
           iss = "issuer",
           sub = "subject",
           aud = "audience",
           exp = TPlus1,
-          iat = TMinus1
+          iat = TMinus1,
+          scopes = Set("scope1", "scope2")
         )
       )
     }
@@ -57,7 +58,8 @@ class ClaimsSpec extends WordSpec with Matchers {
           sub = "subject",
           aud = "audience",
           exp = TPlus2,
-          iat = TPlus1
+          iat = TPlus1,
+          scopes = Set.empty
         )
       )
     }
@@ -73,7 +75,8 @@ class ClaimsSpec extends WordSpec with Matchers {
           sub = "subject",
           aud = "audience",
           exp = TMinus1,
-          iat = TMinus2
+          iat = TMinus2,
+          scopes = Set.empty
         )
       )
     }

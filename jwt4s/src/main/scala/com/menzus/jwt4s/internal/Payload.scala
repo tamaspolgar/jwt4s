@@ -23,7 +23,8 @@ case class Claims(
   sub: String,
   aud: String,
   exp: Long,
-  iat: Long
+  iat: Long,
+  scopes: Set[String]
 )
 
 object Payload {
@@ -51,7 +52,7 @@ object Payload {
       aud    <- verifyAud(claims.aud, settings.audience)
       exp    <- verifyExp(claims.exp, settings.expToleranceInS, nowInS)
       iat    <- verifyIat(claims.iat, settings.iatToleranceInS, nowInS)
-    } yield Claims(iss, sub, aud, exp, iat)
+    } yield Claims(iss, sub, aud, exp, iat, claims.scopes.getOrElse(Set.empty))
   }
 
   private case class RawClaims(
@@ -59,17 +60,19 @@ object Payload {
     sub: Option[String],
     aud: Option[String],
     exp: Option[Long],
-    iat: Option[Long]
+    iat: Option[Long],
+    scopes: Option[Set[String]]
   )
 
   private implicit val claimsDecoder: Decoder[RawClaims] = Decoder.instance[RawClaims] { c =>
     for {
-      iss <- c.downField("iss").as[Option[String]]
-      sub <- c.downField("sub").as[Option[String]]
-      aud <- c.downField("aud").as[Option[String]]
-      exp <- c.downField("exp").as[Option[Long]]
-      iat <- c.downField("iat").as[Option[Long]]
-    } yield RawClaims(iss, sub, aud, exp, iat)
+      iss    <- c.downField("iss").as[Option[String]]
+      sub    <- c.downField("sub").as[Option[String]]
+      aud    <- c.downField("aud").as[Option[String]]
+      exp    <- c.downField("exp").as[Option[Long]]
+      iat    <- c.downField("iat").as[Option[Long]]
+      scopes <- c.downField("scopes").as[Option[Set[String]]]
+    } yield RawClaims(iss, sub, aud, exp, iat, scopes)
   }
 
   private def decodeClaims(payloadBase64: String): Result[RawClaims] = for {
