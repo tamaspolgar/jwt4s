@@ -8,9 +8,9 @@ import com.menzus.jwt4s.Verifier
 
 object JwtDirectives {
 
-  def authenticate[A](verifier: Verifier[A], settings: Settings): AuthenticationDirective[A] = {
+  def authenticate[A](verifier: Verifier[A]): AuthenticationDirective[A] = {
     SecurityDirectives.authenticateOAuth2[A](
-      realm = settings.realm,
+      realm = null,
       authenticator = {
         case Missing         => None
         case Provided(token) => verifier.verifyAndExtract(token).fold(

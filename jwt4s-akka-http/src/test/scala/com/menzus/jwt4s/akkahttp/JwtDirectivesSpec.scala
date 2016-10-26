@@ -39,7 +39,7 @@ class JwtDirectivesSpec extends WordSpec with Matchers with ScalatestRouteTest {
       Get("/authenticated") ~>
         testRoute ~>
         check {
-          rejection shouldBe AuthenticationFailedRejection(CredentialsMissing, oAuth2("test-realm"))
+          rejection shouldBe AuthenticationFailedRejection(CredentialsMissing, oAuth2(null))
       }
     }
 
@@ -49,7 +49,7 @@ class JwtDirectivesSpec extends WordSpec with Matchers with ScalatestRouteTest {
         addHeader("Authorization", "incorrect bearer") ~>
         testRoute ~>
         check {
-          rejection shouldBe AuthenticationFailedRejection(CredentialsRejected, oAuth2("test-realm"))
+          rejection shouldBe AuthenticationFailedRejection(CredentialsRejected, oAuth2(null))
       }
     }
 
@@ -59,14 +59,14 @@ class JwtDirectivesSpec extends WordSpec with Matchers with ScalatestRouteTest {
         addHeader(Authorization(OAuth2BearerToken("invalid"))) ~>
         testRoute ~>
         check {
-          rejection shouldBe AuthenticationFailedRejection(CredentialsRejected, oAuth2("test-realm"))
+          rejection shouldBe AuthenticationFailedRejection(CredentialsRejected, oAuth2(null))
       }
     }
 
     def testRoute =
       path("authenticated") {
         get {
-          authenticate(verifier, settings) { payload =>
+          authenticate(verifier) { payload =>
             complete(payload)
           }
         }
@@ -82,6 +82,4 @@ class JwtDirectivesSpec extends WordSpec with Matchers with ScalatestRouteTest {
       }
     }
   }
-
-  private val settings: Settings = Settings()
 }
