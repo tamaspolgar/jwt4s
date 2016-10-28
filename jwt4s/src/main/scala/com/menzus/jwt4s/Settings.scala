@@ -48,6 +48,8 @@ case class VerifierSettings (
 
 object VerifierSettings {
 
+  val fromConfig = apply()
+
   //TODO is this needed?
   def apply(): VerifierSettings = {
     apply(ConfigFactory.load)

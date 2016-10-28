@@ -25,18 +25,4 @@ object Verifier {
       _        <- verifySignature(header, rawParts.headerBase64, rawParts.payloadBase64, rawParts.signatureBase64)
     } yield claims
   }
-
-  //todo this should be composable like functions
-  def subjectVerifier(settings: VerifierSettings, clock: Clock): Verifier[String] = new Verifier[String] {
-
-    implicit val _settings = settings
-    implicit val _clock = clock
-
-    def verifyAndExtract(jwtToken: String): Result[String] = for {
-      rawParts <- verifyAndExtractRawParts(jwtToken)
-      header   <- verifyAndExtractHeader(rawParts.headerBase64)
-      claims   <- verifyAndExtractClaims(rawParts.payloadBase64)
-      _        <- verifySignature(header, rawParts.headerBase64, rawParts.payloadBase64, rawParts.signatureBase64)
-    } yield claims.sub
-  }
 }

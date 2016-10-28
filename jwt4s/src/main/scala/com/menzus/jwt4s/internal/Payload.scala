@@ -24,21 +24,30 @@ case class Claims(
   aud: String,
   exp: Long,
   iat: Long,
-  scopes: Set[String]
+  roles: Set[String] = Set.empty
 )
 
 object Payload {
 
-  def createClaimsFor(subject: String)(implicit settings: SignerSettings, clock: Clock): String = {
+  def createClaimsFor(subject: String, roles: Set[String])(implicit settings: SignerSettings, clock: Clock): String = {
     val nowInS = clock.nowInS
 
-    val claims = Json.obj(
+    val requiredClaims = Seq(
       "iss" -> Json.fromString(settings.issuer),
       "sub" -> Json.fromString(subject),
       "aud" -> Json.fromString(settings.audience),
       "exp" -> Json.fromLong(nowInS + settings.expiresInS),
       "iat" -> Json.fromLong(nowInS)
     )
+    val rolesClaim =
+      if (roles isEmpty) {
+        Seq.empty
+      } else {
+        Seq("roles" -> Json.fromValues(roles.map(Json.fromString(_))))
+      }
+
+    val claims = Json.fromFields(requiredClaims ++ rolesClaim)
+
     asBase64(claims.noSpaces)
   }
 
@@ -52,7 +61,7 @@ object Payload {
       aud    <- verifyAud(claims.aud, settings.audience)
       exp    <- verifyExp(claims.exp, settings.expToleranceInS, nowInS)
       iat    <- verifyIat(claims.iat, settings.iatToleranceInS, nowInS)
-    } yield Claims(iss, sub, aud, exp, iat, claims.scopes.getOrElse(Set.empty))
+    } yield Claims(iss, sub, aud, exp, iat, claims.roles.getOrElse(Set.empty))
   }
 
   private case class RawClaims(
@@ -61,18 +70,18 @@ object Payload {
     aud: Option[String],
     exp: Option[Long],
     iat: Option[Long],
-    scopes: Option[Set[String]]
+    roles: Option[Set[String]]
   )
 
   private implicit val claimsDecoder: Decoder[RawClaims] = Decoder.instance[RawClaims] { c =>
     for {
-      iss    <- c.downField("iss").as[Option[String]]
-      sub    <- c.downField("sub").as[Option[String]]
-      aud    <- c.downField("aud").as[Option[String]]
-      exp    <- c.downField("exp").as[Option[Long]]
-      iat    <- c.downField("iat").as[Option[Long]]
-      scopes <- c.downField("scopes").as[Option[Set[String]]]
-    } yield RawClaims(iss, sub, aud, exp, iat, scopes)
+      iss   <- c.downField("iss").as[Option[String]]
+      sub   <- c.downField("sub").as[Option[String]]
+      aud   <- c.downField("aud").as[Option[String]]
+      exp   <- c.downField("exp").as[Option[Long]]
+      iat   <- c.downField("iat").as[Option[Long]]
+      roles <- c.downField("roles").as[Option[Set[String]]]
+    } yield RawClaims(iss, sub, aud, exp, iat, roles)
   }
 
   private def decodeClaims(payloadBase64: String): Result[RawClaims] = for {

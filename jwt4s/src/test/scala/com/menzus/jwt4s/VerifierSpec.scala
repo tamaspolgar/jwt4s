@@ -20,8 +20,8 @@ class VerifierSpec extends WordSpec with Matchers {
 
       verifier.verifyAndExtract(
         asBase64("""{"alg":"HS256","typ":"JWT"}""") + "." +
-        asBase64("""{"sub":"subject","aud":"audience","iss":"issuer","iat":-1,"exp":1,"scopes":["admin"]}""") + "." +
-        "8KUvy2hq44bBpJTOeg6-YYsmpjjIXpo3Gat1oEJKqbs"
+        asBase64("""{"sub":"subject","aud":"audience","iss":"issuer","iat":-1,"exp":1,"roles":["admin"]}""") + "." +
+        "qAqBsdNrNXx2LsEOcQvwhrxmVSn715MVzFQjjKKK1YA"
       ) shouldBe
         Xor.Right(
           Claims(
@@ -30,7 +30,7 @@ class VerifierSpec extends WordSpec with Matchers {
             aud = "audience",
             exp = 1,
             iat = -1,
-            scopes = Set("admin")
+            roles = Set("admin")
           )
         )
     }

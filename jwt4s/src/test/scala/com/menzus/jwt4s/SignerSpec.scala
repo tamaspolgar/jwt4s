@@ -7,13 +7,13 @@ class SignerSpec extends WordSpec with Matchers {
 
   "signTokenFor" should {
 
-    "accept and extract payload from valid JWT" in {
+    "create a token for subject and roles" in {
 
-      signer.signTokenFor("subject") shouldBe
+      signer.signTokenFor("subject", Set("admin")) shouldBe
         Token(
           idToken = "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9." +
-            "eyJpc3MiOiJpc3N1ZXIiLCJzdWIiOiJzdWJqZWN0IiwiYXVkIjoiYXVkaWVuY2UiLCJleHAiOjEsImlhdCI6MH0." +
-            "Uds5bROGidPvx0vQWqENj_6CSTSd7pXJVekugXK9A40",
+            "eyJpc3MiOiJpc3N1ZXIiLCJzdWIiOiJzdWJqZWN0IiwiYXVkIjoiYXVkaWVuY2UiLCJleHAiOjEsImlhdCI6MCwicm9sZXMiOlsiYWRtaW4iXX0." +
+            "Dx1gDbUHBkWbUp5lHb3yDnF6T_icIqv2Eqan-gDMbAw",
           expiresIn = 1
         )
     }

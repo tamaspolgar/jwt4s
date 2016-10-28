@@ -23,9 +23,15 @@ class ClaimsSpec extends WordSpec with Matchers {
 
   "createClaimsJsonFor" should {
 
-    "create claims for the subject and the verifier config" in {
+    "create claims for the subject and roles" in {
 
-      createClaimsFor("subject") shouldBe
+      createClaimsFor("subject", Set("admin")) shouldBe
+        asBase64("""{"iss":"issuer","sub":"subject","aud":"audience","exp":1,"iat":0,"roles":["admin"]}""")
+    }
+
+    "create claims for the subject without roles" in {
+
+      createClaimsFor("subject", Set.empty) shouldBe
         asBase64("""{"iss":"issuer","sub":"subject","aud":"audience","exp":1,"iat":0}""")
     }
   }
@@ -35,7 +41,7 @@ class ClaimsSpec extends WordSpec with Matchers {
     "accept and return valid claims" in {
 
       verifyAndExtractClaims(
-        asBase64(s"""{"aud":"audience","sub":"subject","iss":"issuer","iat":$TMinus1,"exp":$TPlus1,"scopes":["scope1","scope2"]}""")
+        asBase64(s"""{"aud":"audience","sub":"subject","iss":"issuer","iat":$TMinus1,"exp":$TPlus1,"roles":["role1","role2"]}""")
       ) shouldBe Xor.Right(
         Claims(
           iss = "issuer",
@@ -43,7 +49,7 @@ class ClaimsSpec extends WordSpec with Matchers {
           aud = "audience",
           exp = TPlus1,
           iat = TMinus1,
-          scopes = Set("scope1", "scope2")
+          roles = Set("role1", "role2")
         )
       )
     }
@@ -59,7 +65,7 @@ class ClaimsSpec extends WordSpec with Matchers {
           aud = "audience",
           exp = TPlus2,
           iat = TPlus1,
-          scopes = Set.empty
+          roles = Set.empty
         )
       )
     }
@@ -76,7 +82,7 @@ class ClaimsSpec extends WordSpec with Matchers {
           aud = "audience",
           exp = TMinus1,
           iat = TMinus2,
-          scopes = Set.empty
+          roles = Set.empty
         )
       )
     }

@@ -82,6 +82,16 @@ class HSAlgorithmSpec extends WordSpec with Matchers {
         InvalidSignatureHS256
       ) shouldBe Xor.Left(error.InvalidSignature)
     }
+
+    "reject invalid short signature" in {
+
+      verifySignature(
+        HsHeader(Hs256),
+        Hs256Header,
+        Payload,
+        InvalidShortSignatureHS256
+      ) shouldBe Xor.Left(error.InvalidSignature)
+    }
   }
 
   implicit val clock = DummyClock.fixedClock
@@ -99,4 +109,5 @@ class HSAlgorithmSpec extends WordSpec with Matchers {
   val ValidSignatureHS512 = "WvikGjdf76l4wOrtuUfHmLi_h6atykfwnmUFrUQRDZ5YJwdDgMXoqiSTQim9XHI6xCVhaGkrPlRAFwkoUJOWUQ"
 
   val InvalidSignatureHS256 = "IzOEkLAHxQpn5ksibrxzITy_5dJFY7Op2mrfCNOrUcv"
+  val InvalidShortSignatureHS256 = "invalid-and-short"
 }
