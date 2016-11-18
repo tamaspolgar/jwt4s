@@ -96,5 +96,5 @@ class VerifierSpec extends WordSpec with Matchers {
     }
   }
 
-  val verifier = Verifier(DummySettings.verifierSettings, DummyClock.fixedClock)
+  val verifier = Verifier(DummySettings.verifierSettings)(DummyClock.fixedClock)
 }

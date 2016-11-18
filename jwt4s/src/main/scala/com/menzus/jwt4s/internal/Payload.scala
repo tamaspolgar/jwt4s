@@ -1,7 +1,8 @@
 package com.menzus.jwt4s.internal
 
+import java.time.Clock
+
 import cats.data.Xor
-import com.menzus.jwt4s.Clock
 import com.menzus.jwt4s.SignerSettings
 import com.menzus.jwt4s.VerifierSettings
 import com.menzus.jwt4s.error.ExpiredExpClaim
@@ -30,7 +31,7 @@ case class Claims(
 object Payload {
 
   def createClaimsFor(subject: String, roles: Set[String])(implicit settings: SignerSettings, clock: Clock): String = {
-    val nowInS = clock.nowInS
+    val nowInS = clock.instant.getEpochSecond
 
     val requiredClaims = Seq(
       "iss" -> Json.fromString(settings.issuer),
@@ -52,7 +53,7 @@ object Payload {
   }
 
   def verifyAndExtractClaims(payloadBase64: String)(implicit settings: VerifierSettings, clock: Clock): Result[Claims] = {
-    val nowInS = clock.nowInS()
+    val nowInS = clock.instant.getEpochSecond
 
     for {
       claims <- decodeClaims(payloadBase64)

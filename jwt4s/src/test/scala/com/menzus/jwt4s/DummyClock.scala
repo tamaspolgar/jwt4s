@@ -1,8 +1,9 @@
 package com.menzus.jwt4s
 
-object DummyClock {
+import java.time.Clock
+import java.time.Instant
+import java.time.ZoneId
 
-  val fixedClock = new Clock {
-    override def nowInMs(): Long = 0
-  }
+object DummyClock {
+  val fixedClock = Clock.fixed(Instant.EPOCH, ZoneId.of("UTC"))
 }

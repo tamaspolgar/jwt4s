@@ -1,11 +1,13 @@
 package com.menzus.jwt4s
 
+import java.time.Clock
+
 import com.menzus.jwt4s.internal.Algorithm.verifySignature
 import com.menzus.jwt4s.internal.Claims
 import com.menzus.jwt4s.internal.Header.verifyAndExtractHeader
-import com.menzus.jwt4s.internal.Result
 import com.menzus.jwt4s.internal.Payload.verifyAndExtractClaims
 import com.menzus.jwt4s.internal.RawParts.verifyAndExtractRawParts
+import com.menzus.jwt4s.internal.Result
 
 trait Verifier[A] {
   def verifyAndExtract(jwtToken: String): Result[A]
@@ -13,10 +15,9 @@ trait Verifier[A] {
 
 object Verifier {
 
-  def apply(settings: VerifierSettings, clock: Clock): Verifier[Claims] = new Verifier[Claims] {
+  def apply(settings: VerifierSettings)(implicit clock: Clock): Verifier[Claims] = new Verifier[Claims] {
 
     implicit val _settings = settings
-    implicit val _clock = clock
 
     def verifyAndExtract(jwtToken: String): Result[Claims] = for {
       rawParts <- verifyAndExtractRawParts(jwtToken)

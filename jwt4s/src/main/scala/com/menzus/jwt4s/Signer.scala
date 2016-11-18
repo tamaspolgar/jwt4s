@@ -1,9 +1,10 @@
 package com.menzus.jwt4s
 
+import java.time.Clock
+
 import com.menzus.jwt4s.internal.Algorithm.createSignature
 import com.menzus.jwt4s.internal.Header.asHeaderBase64
 import com.menzus.jwt4s.internal.Header.createHeader
-import com.menzus.jwt4s.internal.Result
 import com.menzus.jwt4s.internal.Payload.createClaimsFor
 
 trait Signer {
@@ -14,10 +15,9 @@ case class Token(idToken: String, expiresIn: Long)
 
 object Signer {
 
-  def apply(settings: SignerSettings, clock: Clock) = new Signer {
+  def apply(settings: SignerSettings)(implicit clock: Clock) = new Signer {
 
     implicit val _settings = settings
-    implicit val _clock = clock
 
     def signTokenFor(subject: String, roles: Set[String]): Token = {
       val header          = createHeader(settings.algorithm)

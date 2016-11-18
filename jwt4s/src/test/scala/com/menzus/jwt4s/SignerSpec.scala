@@ -19,5 +19,5 @@ class SignerSpec extends WordSpec with Matchers {
     }
   }
 
-  val signer = Signer(DummySettings.signerSettings, DummyClock.fixedClock)
+  val signer = Signer(DummySettings.signerSettings)(DummyClock.fixedClock)
 }

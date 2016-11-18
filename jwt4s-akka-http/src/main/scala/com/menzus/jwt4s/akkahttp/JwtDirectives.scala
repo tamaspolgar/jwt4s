@@ -1,5 +1,7 @@
 package com.menzus.jwt4s.akkahttp
 
+import java.time.Clock
+
 import akka.http.scaladsl.server.AuthorizationFailedRejection
 import akka.http.scaladsl.server.Directive1
 import akka.http.scaladsl.server.Directives.provide
@@ -8,7 +10,6 @@ import akka.http.scaladsl.server.directives.AuthenticationDirective
 import akka.http.scaladsl.server.directives.Credentials.Missing
 import akka.http.scaladsl.server.directives.Credentials.Provided
 import akka.http.scaladsl.server.directives.SecurityDirectives
-import com.menzus.jwt4s.Clock
 import com.menzus.jwt4s.Verifier
 import com.menzus.jwt4s.VerifierSettings
 import com.menzus.jwt4s.internal.Claims
@@ -42,5 +43,5 @@ trait JwtDirectives {
 }
 
 object JwtDirectives extends JwtDirectives {
-  implicit val verifier = Verifier(VerifierSettings.fromConfig, Clock.systemClock)
+  implicit val verifier = Verifier(VerifierSettings.fromConfig)(Clock.systemUTC)
 }
