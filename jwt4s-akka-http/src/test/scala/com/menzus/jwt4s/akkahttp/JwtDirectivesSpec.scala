@@ -90,43 +90,40 @@ class JwtDirectivesSpec extends WordSpec with Matchers with ScalatestRouteTest {
     }
   }
 
+  implicit val verifier = new Verifier[Claims] {
+
+    override def verifyAndExtract(jwtToken: String): Result[Claims] = {
+      val noRoles = Claims(
+        iss = "issuer",
+        sub = "subject",
+        aud = "audience",
+        exp = 0,
+        iat = 0,
+        roles = Set.empty
+      )
+
+      jwtToken match {
+        case "withRole"      => Xor.Right(noRoles.copy(roles = Set("role")))
+        case "withOtherRole" => Xor.Right(noRoles.copy(roles = Set("other-role")))
+        case "noRole"        => Xor.Right(noRoles)
+        case _               => Xor.Left(InvalidSignature)
+      }
+    }
+  }
+
   val testRoute =
     path("authenticated") {
       get {
-        TestDirectives.authenticate { claims =>
+        JwtDirectives.authenticate { claims =>
           complete(claims.sub)
         }
       }
     } ~
     path("authorized") {
       get {
-        TestDirectives.authorize("role") { claims =>
+        JwtDirectives.authorize("role") { claims =>
           complete(claims.sub)
         }
       }
     }
-
-  object TestDirectives extends JwtDirectives {
-
-    implicit val verifier = new Verifier[Claims] {
-
-      override def verifyAndExtract(jwtToken: String): Result[Claims] = {
-        val noRoles = Claims(
-          iss = "issuer",
-          sub = "subject",
-          aud = "audience",
-          exp = 0,
-          iat = 0,
-          roles = Set.empty
-        )
-
-        jwtToken match {
-          case "withRole"      => Xor.Right(noRoles.copy(roles = Set("role")))
-          case "withOtherRole" => Xor.Right(noRoles.copy(roles = Set("other-role")))
-          case "noRole"        => Xor.Right(noRoles)
-          case _               => Xor.Left(InvalidSignature)
-        }
-      }
-    }
-  }
 }
