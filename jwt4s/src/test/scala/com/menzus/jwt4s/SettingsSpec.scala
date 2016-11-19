@@ -11,7 +11,7 @@ class SettingsSpec extends WordSpec with Matchers {
   "SignerSettings" should {
 
     "load settings from config" in {
-      val signerSettings = SignerSettings()
+      val signerSettings = SignerSettings(ConfigFactory.load())
 
       signerSettings.hmacSecretKey shouldBe Array[Int](0xB1, 0xE7, 0x2B, 0x7A).map(_.toByte) //base64(secret)
       signerSettings.algorithm shouldBe Hs256
@@ -55,7 +55,7 @@ class SettingsSpec extends WordSpec with Matchers {
 
     "load settings from config" in {
 
-      val verifierSettings = VerifierSettings()
+      val verifierSettings = VerifierSettings(ConfigFactory.load())
 
       verifierSettings.hmacSecretKey shouldBe Array[Int](0xB1, 0xE7, 0x2B, 0x7A).map(_.toByte) //base64(secret)
       verifierSettings.audience shouldBe "theAudience"

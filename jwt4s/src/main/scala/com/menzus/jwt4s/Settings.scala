@@ -19,11 +19,6 @@ case class SignerSettings(
 
 object SignerSettings {
 
-  //TODO is this needed?
-  def apply(): SignerSettings = {
-    apply(ConfigFactory.load)
-  }
-
   def apply(config: Config): SignerSettings = {
     val jwtConfig = Settings.jwtConfig(config)
 
@@ -48,18 +43,6 @@ case class VerifierSettings (
 
 object VerifierSettings {
 
-  val fromConfig = apply()
-
-  //TODO is this needed?
-  def apply(): VerifierSettings = {
-    apply(ConfigFactory.load)
-  }
-
-  def apply(resource: String): VerifierSettings = {
-    apply(ConfigFactory.load(resource))
-  }
-
-  //todo is this needed like this?
   def apply(config: Config): VerifierSettings = {
     val jwtConfig = Settings.jwtConfig(config)
 
