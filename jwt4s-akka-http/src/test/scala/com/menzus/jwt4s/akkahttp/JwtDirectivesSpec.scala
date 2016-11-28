@@ -13,11 +13,11 @@ import akka.http.scaladsl.server.Directives.complete
 import akka.http.scaladsl.server.Directives.get
 import akka.http.scaladsl.server.Directives.path
 import akka.http.scaladsl.testkit.ScalatestRouteTest
-import cats.data.Xor
 import com.menzus.jwt4s.Verifier
 import com.menzus.jwt4s.error.InvalidSignature
-import com.menzus.jwt4s.internal.Claims
+import com.menzus.jwt4s.internal.IdClaims
 import com.menzus.jwt4s.internal.Result
+import com.menzus.jwt4s.internal.RfpClaims
 import org.scalatest.Matchers
 import org.scalatest.WordSpec
 
@@ -90,10 +90,10 @@ class JwtDirectivesSpec extends WordSpec with Matchers with ScalatestRouteTest {
     }
   }
 
-  implicit val verifier = new Verifier[Claims] {
+  implicit val verifier = new Verifier {
 
-    override def verifyAndExtract(jwtToken: String): Result[Claims] = {
-      val noRoles = Claims(
+    def verifyAndExtractIdClaims(jwtToken: String): Result[IdClaims] = {
+      val noRoles = IdClaims(
         iss = "issuer",
         sub = "subject",
         aud = "audience",
@@ -103,12 +103,14 @@ class JwtDirectivesSpec extends WordSpec with Matchers with ScalatestRouteTest {
       )
 
       jwtToken match {
-        case "withRole"      => Xor.Right(noRoles.copy(roles = Set("role")))
-        case "withOtherRole" => Xor.Right(noRoles.copy(roles = Set("other-role")))
-        case "noRole"        => Xor.Right(noRoles)
-        case _               => Xor.Left(InvalidSignature)
+        case "withRole"      => Right(noRoles.copy(roles = Set("role")))
+        case "withOtherRole" => Right(noRoles.copy(roles = Set("other-role")))
+        case "noRole"        => Right(noRoles)
+        case _               => Left(InvalidSignature)
       }
     }
+
+    def verifyAndExtractRfpClaims(jwtToken: String): Result[RfpClaims] = ???
   }
 
   val testRoute =

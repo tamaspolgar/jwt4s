@@ -1,6 +1,5 @@
 package com.menzus.jwt4s.internal
 
-import cats.data.Xor
 import com.menzus.jwt4s.DummyClock
 import com.menzus.jwt4s.DummySettings
 import com.menzus.jwt4s.error.ExpiredExpClaim
@@ -13,37 +12,53 @@ import com.menzus.jwt4s.error.NoAudClaimProvided
 import com.menzus.jwt4s.error.NoExpClaimProvided
 import com.menzus.jwt4s.error.NoIatClaimProvided
 import com.menzus.jwt4s.error.NoIssClaimProvided
+import com.menzus.jwt4s.error.NoRfpClaimProvided
 import com.menzus.jwt4s.error.NoSubClaimProvided
-import com.menzus.jwt4s.internal.Payload.createClaimsFor
-import com.menzus.jwt4s.internal.Payload.verifyAndExtractClaims
+import com.menzus.jwt4s.internal.Payload.createIdClaimsFor
+import com.menzus.jwt4s.internal.Payload.createRfpClaimsFor
+import com.menzus.jwt4s.internal.Payload.verifyAndExtractIdClaims
+import com.menzus.jwt4s.internal.Payload.verifyAndExtractRfpClaims
 import org.scalatest.Matchers
 import org.scalatest.WordSpec
 
 class ClaimsSpec extends WordSpec with Matchers {
 
-  "createClaimsJsonFor" should {
+  implicit val clock = DummyClock.fixedClock
+  implicit val signerSettings = DummySettings.signerSettings
+  implicit val verifierSettings = DummySettings.verifierSettings
 
-    "create claims for the subject and roles" in {
+  "createIdClaimsFor" should {
 
-      createClaimsFor("subject", Set("admin")) shouldBe
+    "create id claims for the subject and roles" in {
+
+      createIdClaimsFor("subject", Set("admin")) shouldBe
         asBase64("""{"iss":"issuer","sub":"subject","aud":"audience","exp":1,"iat":0,"roles":["admin"]}""")
     }
 
-    "create claims for the subject without roles" in {
+    "create id claims for the subject without roles" in {
 
-      createClaimsFor("subject", Set.empty) shouldBe
+      createIdClaimsFor("subject", Set.empty) shouldBe
         asBase64("""{"iss":"issuer","sub":"subject","aud":"audience","exp":1,"iat":0}""")
     }
   }
 
-  "verifyAndExtractClaims" should {
+  "createRfpClaimsFor" should {
+
+    "create rfp claims for the rfp token" in {
+
+      createRfpClaimsFor("rfp token") shouldBe
+        asBase64("""{"iss":"issuer","rfp":"rfp token","aud":"audience","exp":1,"iat":0}""")
+    }
+  }
+
+  "verifyAndExtractIdClaims" should {
 
     "accept and return valid claims" in {
 
-      verifyAndExtractClaims(
+      verifyAndExtractIdClaims(
         asBase64(s"""{"aud":"audience","sub":"subject","iss":"issuer","iat":$TMinus1,"exp":$TPlus1,"roles":["role1","role2"]}""")
-      ) shouldBe Xor.Right(
-        Claims(
+      ) shouldBe Right(
+        IdClaims(
           iss = "issuer",
           sub = "subject",
           aud = "audience",
@@ -56,10 +71,10 @@ class ClaimsSpec extends WordSpec with Matchers {
 
     "accept iat within the tolerance" in {
 
-      verifyAndExtractClaims(
+      verifyAndExtractIdClaims(
         asBase64(s"""{"aud":"audience","sub":"subject","iss":"issuer","iat":$TPlus1,"exp":$TPlus2}""")
-      ) shouldBe Xor.Right(
-        Claims(
+      ) shouldBe Right(
+        IdClaims(
           iss = "issuer",
           sub = "subject",
           aud = "audience",
@@ -73,10 +88,10 @@ class ClaimsSpec extends WordSpec with Matchers {
 
     "accept exp within the tolerance" in {
 
-      verifyAndExtractClaims(
+      verifyAndExtractIdClaims(
         asBase64(s"""{"aud":"audience","sub":"subject","iss":"issuer","iat":$TMinus2,"exp":$TMinus1}""")
-      ) shouldBe Xor.Right(
-        Claims(
+      ) shouldBe Right(
+        IdClaims(
           iss = "issuer",
           sub = "subject",
           aud = "audience",
@@ -89,74 +104,100 @@ class ClaimsSpec extends WordSpec with Matchers {
 
     "reject invalid json claims" in {
 
-      verifyAndExtractClaims(asBase64(s"""not json""")) shouldBe Xor.Left(FailedToParseClaims("""not json"""))
+      verifyAndExtractIdClaims(asBase64(s"""not json""")) shouldBe Left(FailedToParseClaims("""not json"""))
     }
 
     "reject non base64 payload" in {
 
-      verifyAndExtractClaims("non base64") shouldBe Xor.Left(InvalidBase64Format("non base64"))
+      verifyAndExtractIdClaims("non base64") shouldBe Left(InvalidBase64Format("non base64"))
     }
 
     "reject header with missing subject" in {
 
-      verifyAndExtractClaims(asBase64(s"""{"aud":"audience","iss":"issuer","iat":-1,"exp":1}""")) shouldBe
-        Xor.Left(NoSubClaimProvided)
+      verifyAndExtractIdClaims(asBase64(s"""{"aud":"audience","iss":"issuer","iat":-1,"exp":1}""")) shouldBe
+        Left(NoSubClaimProvided)
     }
 
     "reject header with missing audience" in {
 
-      verifyAndExtractClaims(asBase64(s"""{"sub":"subject","iss":"issuer","iat":-1,"exp":1}""")) shouldBe
-        Xor.Left(NoAudClaimProvided)
+      verifyAndExtractIdClaims(asBase64(s"""{"sub":"subject","iss":"issuer","iat":-1,"exp":1}""")) shouldBe
+        Left(NoAudClaimProvided)
     }
 
     "reject header with wrong audience" in {
 
-      verifyAndExtractClaims(asBase64(s"""{"aud":"other audience","sub":"subject","iss":"issuer","iat":-1,"exp":1}""")) shouldBe
-        Xor.Left(InvalidAudClaim("other audience"))
+      verifyAndExtractIdClaims(asBase64(s"""{"aud":"other audience","sub":"subject","iss":"issuer","iat":-1,"exp":1}""")) shouldBe
+        Left(InvalidAudClaim("other audience"))
     }
 
     "reject header with missing issuer" in {
 
-      verifyAndExtractClaims(asBase64(s"""{"aud":"audience","sub":"subject","iat":-1,"exp":1}""")) shouldBe
-        Xor.Left(NoIssClaimProvided)
+      verifyAndExtractIdClaims(asBase64(s"""{"aud":"audience","sub":"subject","iat":-1,"exp":1}""")) shouldBe
+        Left(NoIssClaimProvided)
     }
 
     "reject header with wrong issuer" in {
 
-      verifyAndExtractClaims(asBase64(s"""{"aud":"audience","sub":"subject","iss":"other issuer","iat":-1,"exp":1}""")) shouldBe
-        Xor.Left(InvalidIssClaim("other issuer"))
+      verifyAndExtractIdClaims(asBase64(s"""{"aud":"audience","sub":"subject","iss":"other issuer","iat":-1,"exp":1}""")) shouldBe
+        Left(InvalidIssClaim("other issuer"))
     }
 
     "reject header with missing exp" in {
 
-      verifyAndExtractClaims(asBase64(s"""{"aud":"audience","sub":"subject","iss":"issuer","iat":-1}""")) shouldBe
-        Xor.Left(NoExpClaimProvided)
+      verifyAndExtractIdClaims(asBase64(s"""{"aud":"audience","sub":"subject","iss":"issuer","iat":-1}""")) shouldBe
+        Left(NoExpClaimProvided)
     }
 
     "reject header with out of tolerance expired exp" in {
 
-      verifyAndExtractClaims(
+      verifyAndExtractIdClaims(
         asBase64(s"""{"aud":"audience","sub":"subject","iss":"issuer","iat":$TMinus3,"exp":$TMinus2}""")) shouldBe
-        Xor.Left(ExpiredExpClaim(TMinus2, T0))
+        Left(ExpiredExpClaim(TMinus2, T0))
     }
 
     "reject header with missing iat" in {
 
-      verifyAndExtractClaims(asBase64(s"""{"aud":"audience","sub":"subject","iss":"issuer","exp":$TPlus1}""")) shouldBe
-        Xor.Left(NoIatClaimProvided)
+      verifyAndExtractIdClaims(asBase64(s"""{"aud":"audience","sub":"subject","iss":"issuer","exp":$TPlus1}""")) shouldBe
+        Left(NoIatClaimProvided)
     }
 
     "reject header with out of tolerance future iat" in {
 
-      verifyAndExtractClaims(
+      verifyAndExtractIdClaims(
         asBase64(s"""{"aud":"audience","sub":"subject","iss":"issuer","iat":$TPlus2,"exp":$TPlus3}""")) shouldBe
-        Xor.Left(FutureIatClaim(TPlus2, T0))
+        Left(FutureIatClaim(TPlus2, T0))
     }
   }
 
-  implicit val clock = DummyClock.fixedClock
-  implicit val signerSettings = DummySettings.signerSettings
-  implicit val verifierSettings = DummySettings.verifierSettings
+  "verifyAndExtractRfpClaims" should {
+
+    "accept and return valid claims" in {
+
+      verifyAndExtractRfpClaims(
+        asBase64(s"""{"aud":"audience","rfp":"rfp token","iss":"issuer","iat":$TMinus1,"exp":$TPlus1}""")
+      ) shouldBe Right(
+        RfpClaims(
+          iss = "issuer",
+          rfp = "rfp token",
+          aud = "audience",
+          exp = TPlus1,
+          iat = TMinus1
+        )
+      )
+    }
+
+    "reject with missing rfp claim" in {
+
+      verifyAndExtractRfpClaims(
+        asBase64(s"""{"aud":"audience","iss":"issuer","iat":$TMinus1,"exp":$TPlus1}""")
+      ) shouldBe Left(NoRfpClaimProvided)
+    }
+
+    "reject invalid json claims" in {
+
+      verifyAndExtractRfpClaims(asBase64(s"""not json""")) shouldBe Left(FailedToParseClaims("""not json"""))
+    }
+  }
 
   val TMinus3 = -3
   val TMinus2 = -2

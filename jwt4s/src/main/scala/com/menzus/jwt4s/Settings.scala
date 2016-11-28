@@ -7,7 +7,7 @@ import com.typesafe.config.Config
 import com.typesafe.config.ConfigException.BadValue
 import com.typesafe.config.ConfigFactory
 
-import scala.collection.JavaConversions._
+import scala.collection.JavaConverters.asScalaBuffer
 
 case class SignerSettings(
   hmacSecretKey: Array[Byte],
@@ -50,7 +50,7 @@ object VerifierSettings {
       hmacSecretKey = Settings.hmacSecretKey(jwtConfig),
       audience = jwtConfig.getString("audience"),
       issuer = jwtConfig.getString("issuer"),
-      acceptedAlgHeaders = jwtConfig.getStringList("accepted-alg-headers").toSet[String]
+      acceptedAlgHeaders = asScalaBuffer(jwtConfig.getStringList("accepted-alg-headers")).toSet[String]
         .map(alg => Settings.asAlgorithm(alg, "accepted-alg-headers")),
       expToleranceInS = jwtConfig.getDuration("exp.tolerance").getSeconds,
       iatToleranceInS = jwtConfig.getDuration("iat.tolerance").getSeconds

@@ -5,11 +5,39 @@ import org.scalatest.WordSpec
 
 class SignerSpec extends WordSpec with Matchers {
 
-  "signTokenFor" should {
+  "signRequestForgeryProtection" should {
 
     "create a token for subject and roles" in {
 
-      signer.signTokenFor("subject", Set("admin")) shouldBe
+      signer.signRequestForgeryProtection("rfp token") shouldBe
+        Token(
+          idToken = "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9." +
+            "eyJpc3MiOiJpc3N1ZXIiLCJyZnAiOiJyZnAgdG9rZW4iLCJhdWQiOiJhdWRpZW5jZSIsImV4cCI6MSwiaWF0IjowfQ." +
+            "UaoPOsgyo_mDime7_Ddb1gUxKm49yaqUfUWIC2B2eF0",
+          expiresIn = 1
+        )
+    }
+  }
+
+  "signSubject" should {
+
+    "create a token for subject and roles" in {
+
+      signer.signSubject("subject") shouldBe
+        Token(
+          idToken = "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9." +
+            "eyJpc3MiOiJpc3N1ZXIiLCJzdWIiOiJzdWJqZWN0IiwiYXVkIjoiYXVkaWVuY2UiLCJleHAiOjEsImlhdCI6MH0." +
+            "Uds5bROGidPvx0vQWqENj_6CSTSd7pXJVekugXK9A40",
+          expiresIn = 1
+        )
+    }
+  }
+
+  "signSubjectAndRoles" should {
+
+    "create a token for subject and roles" in {
+
+      signer.signSubjectAndRoles("subject", Set("admin")) shouldBe
         Token(
           idToken = "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9." +
             "eyJpc3MiOiJpc3N1ZXIiLCJzdWIiOiJzdWJqZWN0IiwiYXVkIjoiYXVkaWVuY2UiLCJleHAiOjEsImlhdCI6MCwicm9sZXMiOlsiYWRtaW4iXX0." +

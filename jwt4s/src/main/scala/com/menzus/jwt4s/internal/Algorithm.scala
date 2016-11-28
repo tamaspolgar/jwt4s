@@ -3,7 +3,6 @@ package com.menzus.jwt4s.internal
 import javax.crypto.Mac
 import javax.crypto.spec.SecretKeySpec
 
-import cats.data.Xor
 import com.menzus.jwt4s.SignerSettings
 import com.menzus.jwt4s.VerifierSettings
 import com.menzus.jwt4s.error.InvalidAlgHeader
@@ -34,9 +33,9 @@ sealed abstract class Hs(javaMacAlgName: String) extends Algorithm {
     val calculatedSignatureBase64 = base64FromBytes(mutableMac.doFinal)
 
     if (secureDigestEquals(calculatedSignatureBase64, providedSignatureBase64)) {
-      Xor.Right(providedSignatureBase64)
+      Right(providedSignatureBase64)
     } else {
-      Xor.Left(InvalidSignature)
+      Left(InvalidSignature)
     }
   }
 
@@ -93,10 +92,10 @@ object Algorithm {
   }
 
   private[jwt4s] def algHeaderToAlgorithm(alg: String) = alg match {
-    case "HS256" => Xor.Right(Hs256)
-    case "HS384" => Xor.Right(Hs384)
-    case "HS512" => Xor.Right(Hs512)
-    case _       => Xor.Left(InvalidAlgHeader(alg))
+    case "HS256" => Right(Hs256)
+    case "HS384" => Right(Hs384)
+    case "HS512" => Right(Hs512)
+    case _       => Left(InvalidAlgHeader(alg))
   }
 
   private[jwt4s] def algorithmToAlgHeader(algorithm: Algorithm) = algorithm match {

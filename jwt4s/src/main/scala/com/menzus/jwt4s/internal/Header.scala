@@ -1,6 +1,5 @@
 package com.menzus.jwt4s.internal
 
-import cats.data.Xor
 import com.menzus.jwt4s.VerifierSettings
 import com.menzus.jwt4s.error.FailedToParseHeader
 import com.menzus.jwt4s.error.InvalidTypInHeader
@@ -50,8 +49,8 @@ object Header {
   } yield rawHeader
 
   private def verifyAndExtractTyp(typ: String): Result[String] = typ match {
-    case "JWT" => Xor.Right(typ)
-    case _     => Xor.Left(InvalidTypInHeader(typ))
+    case "JWT" => Right(typ)
+    case _     => Left(InvalidTypInHeader(typ))
   }
 
   private def verifyAndExtractAlg(alg: String, acceptedAlgHeaders: Set[Algorithm]): Result[Algorithm] = for {
@@ -61,9 +60,9 @@ object Header {
 
   private def rejectUnacceptedAlgs(alg: Algorithm, acceptedAlgHeaders: Set[Algorithm]) = {
     if (acceptedAlgHeaders.contains(alg)) {
-      Xor.Right(alg)
+      Right(alg)
     } else {
-      Xor.Left(UnacceptedAlgHeader(alg))
+      Left(UnacceptedAlgHeader(alg))
     }
   }
 
@@ -76,9 +75,9 @@ object Header {
   private def rejectUnacceptedFields(fields: Set[String]) = {
     val unacceptedFields = fields.filterNot(field => AcceptedFields.contains(field))
     if (unacceptedFields.isEmpty) {
-      Xor.Right(unacceptedFields)
+      Right(unacceptedFields)
     } else {
-      Xor.Left(UnacceptedFieldsInHeader(unacceptedFields))
+      Left(UnacceptedFieldsInHeader(unacceptedFields))
     }
   }
 }

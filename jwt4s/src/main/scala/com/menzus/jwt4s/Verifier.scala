@@ -3,26 +3,36 @@ package com.menzus.jwt4s
 import java.time.Clock
 
 import com.menzus.jwt4s.internal.Algorithm.verifySignature
-import com.menzus.jwt4s.internal.Claims
+import com.menzus.jwt4s.internal.IdClaims
 import com.menzus.jwt4s.internal.Header.verifyAndExtractHeader
-import com.menzus.jwt4s.internal.Payload.verifyAndExtractClaims
+import com.menzus.jwt4s.internal.Payload.{verifyAndExtractIdClaims => verifyAndExtractIdClaimsPayload}
+import com.menzus.jwt4s.internal.Payload.{verifyAndExtractRfpClaims => verifyAndExtractRfpClaimsPayload}
 import com.menzus.jwt4s.internal.RawParts.verifyAndExtractRawParts
 import com.menzus.jwt4s.internal.Result
+import com.menzus.jwt4s.internal.RfpClaims
 
-trait Verifier[A] {
-  def verifyAndExtract(jwtToken: String): Result[A]
+trait Verifier {
+  def verifyAndExtractIdClaims(jwtToken: String): Result[IdClaims]
+  def verifyAndExtractRfpClaims(jwtToken: String): Result[RfpClaims]
 }
 
 object Verifier {
 
-  def apply(settings: VerifierSettings)(implicit clock: Clock): Verifier[Claims] = new Verifier[Claims] {
+  def apply(settings: VerifierSettings)(implicit clock: Clock): Verifier = new Verifier {
 
     implicit val _settings = settings
 
-    def verifyAndExtract(jwtToken: String): Result[Claims] = for {
+    def verifyAndExtractIdClaims(jwtToken: String): Result[IdClaims] = for {
       rawParts <- verifyAndExtractRawParts(jwtToken)
       header   <- verifyAndExtractHeader(rawParts.headerBase64)
-      claims   <- verifyAndExtractClaims(rawParts.payloadBase64)
+      claims   <- verifyAndExtractIdClaimsPayload(rawParts.payloadBase64)
+      _        <- verifySignature(header, rawParts.headerBase64, rawParts.payloadBase64, rawParts.signatureBase64)
+    } yield claims
+
+    def verifyAndExtractRfpClaims(jwtToken: String): Result[RfpClaims] = for {
+      rawParts <- verifyAndExtractRawParts(jwtToken)
+      header   <- verifyAndExtractHeader(rawParts.headerBase64)
+      claims   <- verifyAndExtractRfpClaimsPayload(rawParts.payloadBase64)
       _        <- verifySignature(header, rawParts.headerBase64, rawParts.payloadBase64, rawParts.signatureBase64)
     } yield claims
   }

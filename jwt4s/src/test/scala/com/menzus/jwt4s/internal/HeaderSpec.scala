@@ -1,6 +1,5 @@
 package com.menzus.jwt4s.internal
 
-import cats.data.Xor
 import com.menzus.jwt4s.DummySettings
 import com.menzus.jwt4s.error.FailedToParseHeader
 import com.menzus.jwt4s.error.InvalidAlgHeader
@@ -22,41 +21,41 @@ class HeaderSpec extends WordSpec with Matchers {
 
     "accept header with supported algorithms" in {
 
-      verifyAndExtractHeader(asBase64("""{"alg":"HS256","typ":"JWT"}""")) shouldBe Xor.Right(HsHeader(Hs256))
-      verifyAndExtractHeader(asBase64("""{"alg":"HS384","typ":"JWT"}""")) shouldBe Xor.Right(HsHeader(Hs384))
-      verifyAndExtractHeader(asBase64("""{"alg":"HS512","typ":"JWT"}""")) shouldBe Xor.Right(HsHeader(Hs512))
+      verifyAndExtractHeader(asBase64("""{"alg":"HS256","typ":"JWT"}""")) shouldBe Right(HsHeader(Hs256))
+      verifyAndExtractHeader(asBase64("""{"alg":"HS384","typ":"JWT"}""")) shouldBe Right(HsHeader(Hs384))
+      verifyAndExtractHeader(asBase64("""{"alg":"HS512","typ":"JWT"}""")) shouldBe Right(HsHeader(Hs512))
     }
 
     "reject header if it's not given in base64" in {
 
-      verifyAndExtractHeader("non base64") shouldBe Xor.Left(InvalidBase64Format("non base64"))
+      verifyAndExtractHeader("non base64") shouldBe Left(InvalidBase64Format("non base64"))
     }
 
     "reject non valid json header" in {
 
       verifyAndExtractHeader(asBase64("invalid json")) shouldBe
-        Xor.Left(FailedToParseHeader("invalid json"))
+        Left(FailedToParseHeader("invalid json"))
 
       verifyAndExtractHeader(asBase64("\"json string\"")) shouldBe
-        Xor.Left(FailedToParseHeader("\"json string\""))
+        Left(FailedToParseHeader("\"json string\""))
 
       verifyAndExtractHeader(asBase64("""{"typ":{},"alg":"HS256"}""")) shouldBe
-        Xor.Left(FailedToParseHeader("""{"typ":{},"alg":"HS256"}"""))
+        Left(FailedToParseHeader("""{"typ":{},"alg":"HS256"}"""))
 
       verifyAndExtractHeader(asBase64("""{"alg":{},"typ":"JWT"}""")) shouldBe
-        Xor.Left(FailedToParseHeader("""{"alg":{},"typ":"JWT"}"""))
+        Left(FailedToParseHeader("""{"alg":{},"typ":"JWT"}"""))
 
       verifyAndExtractHeader(asBase64("""{"typ":"JWT"}""")) shouldBe
-        Xor.Left(FailedToParseHeader("""{"typ":"JWT"}"""))
+        Left(FailedToParseHeader("""{"typ":"JWT"}"""))
 
       verifyAndExtractHeader(asBase64("""{"alg":"HS256"}""")) shouldBe
-        Xor.Left(FailedToParseHeader("""{"alg":"HS256"}"""))
+        Left(FailedToParseHeader("""{"alg":"HS256"}"""))
     }
 
     "reject header with unaccepted fields" in {
 
       verifyAndExtractHeader(asBase64("""{"alg":"anAlg","typ":"aTyp","unaccepted":"value"}""")) shouldBe
-        Xor.Left(UnacceptedFieldsInHeader(Set("unaccepted")))
+        Left(UnacceptedFieldsInHeader(Set("unaccepted")))
     }
 
     "reject header with unaccepted alg" in {
@@ -64,19 +63,19 @@ class HeaderSpec extends WordSpec with Matchers {
       val onlyHs384 = settings.copy(acceptedAlgHeaders = Set(Hs256))
 
       verifyAndExtractHeader(asBase64("""{"alg":"HS384","typ":"JWT"}"""))(onlyHs384) shouldBe
-        Xor.Left(UnacceptedAlgHeader(Hs384))
+        Left(UnacceptedAlgHeader(Hs384))
     }
 
       "reject header with unsupported alg" in {
 
         verifyAndExtractHeader(asBase64("""{"alg":"unsupported","typ":"JWT"}""")) shouldBe
-          Xor.Left(InvalidAlgHeader("unsupported"))
+          Left(InvalidAlgHeader("unsupported"))
       }
 
     "reject header with wrong typ field" in {
 
       verifyAndExtractHeader(asBase64("""{"alg":"HS256","typ":"non-JWT"}""")) shouldBe
-        Xor.Left(InvalidTypInHeader("non-JWT"))
+        Left(InvalidTypInHeader("non-JWT"))
     }
   }
 

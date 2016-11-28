@@ -1,6 +1,5 @@
 package com.menzus.jwt4s.internal
 
-import cats.data.Xor
 import com.menzus.jwt4s.error.InvalidStructure
 import com.menzus.jwt4s.internal.RawParts.verifyAndExtractRawParts
 import org.scalatest.Matchers
@@ -12,12 +11,12 @@ class RawPartsSpec extends WordSpec with Matchers {
 
     "return raw parts for valid token strucutre" in {
 
-      verifyAndExtractRawParts("a.b.c") shouldBe Xor.Right(
+      verifyAndExtractRawParts("a.b.c") shouldBe Right(
         RawParts(headerBase64 = "a", payloadBase64 = "b", signatureBase64 = "c")
       )
 
       verifyAndExtractRawParts("ABCDEFGHIJKLMNOPQRSTUVWXYZ.abcdefghijklmnopqrstuvwxyz.0123456789-_") shouldBe
-        Xor.Right(
+        Right(
           RawParts(
             headerBase64 = "ABCDEFGHIJKLMNOPQRSTUVWXYZ",
             payloadBase64 = "abcdefghijklmnopqrstuvwxyz",
@@ -28,32 +27,32 @@ class RawPartsSpec extends WordSpec with Matchers {
 
     "reject token with non 3 parts" in {
 
-      verifyAndExtractRawParts("") shouldBe Xor.Left(InvalidStructure)
-      verifyAndExtractRawParts("a") shouldBe Xor.Left(InvalidStructure)
-      verifyAndExtractRawParts(".") shouldBe Xor.Left(InvalidStructure)
-      verifyAndExtractRawParts("a.") shouldBe Xor.Left(InvalidStructure)
-      verifyAndExtractRawParts(".a") shouldBe Xor.Left(InvalidStructure)
-      verifyAndExtractRawParts("a.b") shouldBe Xor.Left(InvalidStructure)
-      verifyAndExtractRawParts("..") shouldBe Xor.Left(InvalidStructure)
-      verifyAndExtractRawParts("a..") shouldBe Xor.Left(InvalidStructure)
-      verifyAndExtractRawParts(".a.") shouldBe Xor.Left(InvalidStructure)
-      verifyAndExtractRawParts("..a") shouldBe Xor.Left(InvalidStructure)
-      verifyAndExtractRawParts("a.b.") shouldBe Xor.Left(InvalidStructure)
-      verifyAndExtractRawParts(".a.b") shouldBe Xor.Left(InvalidStructure)
-      verifyAndExtractRawParts("...") shouldBe Xor.Left(InvalidStructure)
-      verifyAndExtractRawParts("a.b.c.") shouldBe Xor.Left(InvalidStructure)
-      verifyAndExtractRawParts(".a.b.c") shouldBe Xor.Left(InvalidStructure)
-      verifyAndExtractRawParts("a.b.c.d") shouldBe Xor.Left(InvalidStructure)
+      verifyAndExtractRawParts("") shouldBe Left(InvalidStructure)
+      verifyAndExtractRawParts("a") shouldBe Left(InvalidStructure)
+      verifyAndExtractRawParts(".") shouldBe Left(InvalidStructure)
+      verifyAndExtractRawParts("a.") shouldBe Left(InvalidStructure)
+      verifyAndExtractRawParts(".a") shouldBe Left(InvalidStructure)
+      verifyAndExtractRawParts("a.b") shouldBe Left(InvalidStructure)
+      verifyAndExtractRawParts("..") shouldBe Left(InvalidStructure)
+      verifyAndExtractRawParts("a..") shouldBe Left(InvalidStructure)
+      verifyAndExtractRawParts(".a.") shouldBe Left(InvalidStructure)
+      verifyAndExtractRawParts("..a") shouldBe Left(InvalidStructure)
+      verifyAndExtractRawParts("a.b.") shouldBe Left(InvalidStructure)
+      verifyAndExtractRawParts(".a.b") shouldBe Left(InvalidStructure)
+      verifyAndExtractRawParts("...") shouldBe Left(InvalidStructure)
+      verifyAndExtractRawParts("a.b.c.") shouldBe Left(InvalidStructure)
+      verifyAndExtractRawParts(".a.b.c") shouldBe Left(InvalidStructure)
+      verifyAndExtractRawParts("a.b.c.d") shouldBe Left(InvalidStructure)
     }
 
     "reject token with linebreak, whitespace and additional characters" in {
 
-      verifyAndExtractRawParts("a\n.b.c") shouldBe Xor.Left(InvalidStructure)
-      verifyAndExtractRawParts("a\t.b.c") shouldBe Xor.Left(InvalidStructure)
-      verifyAndExtractRawParts("a .b.c") shouldBe Xor.Left(InvalidStructure)
-      verifyAndExtractRawParts("a@.b.c") shouldBe Xor.Left(InvalidStructure)
-      verifyAndExtractRawParts("a$.b.c") shouldBe Xor.Left(InvalidStructure)
-      verifyAndExtractRawParts("a?.b.c") shouldBe Xor.Left(InvalidStructure)
+      verifyAndExtractRawParts("a\n.b.c") shouldBe Left(InvalidStructure)
+      verifyAndExtractRawParts("a\t.b.c") shouldBe Left(InvalidStructure)
+      verifyAndExtractRawParts("a .b.c") shouldBe Left(InvalidStructure)
+      verifyAndExtractRawParts("a@.b.c") shouldBe Left(InvalidStructure)
+      verifyAndExtractRawParts("a$.b.c") shouldBe Left(InvalidStructure)
+      verifyAndExtractRawParts("a?.b.c") shouldBe Left(InvalidStructure)
     }
   }
 }

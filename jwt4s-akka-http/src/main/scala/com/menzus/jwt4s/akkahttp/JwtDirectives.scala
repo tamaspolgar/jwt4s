@@ -9,26 +9,26 @@ import akka.http.scaladsl.server.directives.Credentials.Missing
 import akka.http.scaladsl.server.directives.Credentials.Provided
 import akka.http.scaladsl.server.directives.SecurityDirectives
 import com.menzus.jwt4s.Verifier
-import com.menzus.jwt4s.internal.Claims
+import com.menzus.jwt4s.internal.IdClaims
 
 object JwtDirectives {
 
-  def authenticate(f: Claims => Route)(implicit verifier: Verifier[Claims]): Route = {
+  def authenticate(f: IdClaims => Route)(implicit verifier: Verifier): Route = {
     authenticateDirective(verifier).apply(f)
   }
 
-  def authorize(roles: String*)(f: Claims => Route)(implicit verifier: Verifier[Claims]): Route = {
+  def authorize(roles: String*)(f: IdClaims => Route)(implicit verifier: Verifier): Route = {
     authenticateDirective(verifier)
       .flatMap(checkRoles(roles))
       .apply(f)
   }
 
-  private def authenticateDirective(verifier: Verifier[Claims]) = {
+  private def authenticateDirective(verifier: Verifier) = {
     SecurityDirectives.authenticateOAuth2(
       realm = null,
       authenticator = {
         case Missing         => None
-        case Provided(token) => verifier.verifyAndExtract(token).fold(
+        case Provided(token) => verifier.verifyAndExtractIdClaims(token).fold(
           error  => None,
           payload => Some(payload)
         )
@@ -36,7 +36,7 @@ object JwtDirectives {
     )
   }
 
-  private def checkRoles(roles: Seq[String])(claims: Claims): Directive1[Claims] = {
+  private def checkRoles(roles: Seq[String])(claims: IdClaims): Directive1[IdClaims] = {
     if (roles.forall(role => claims.roles.contains(role))) {
       provide(claims)
     } else {

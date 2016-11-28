@@ -3,15 +3,15 @@ package com.menzus.jwt4s
 import java.nio.charset.Charset
 import java.util.Base64
 
-import cats.data.Xor
+import cats.syntax.EitherSyntax
 import com.menzus.jwt4s.error.Error
 import com.menzus.jwt4s.error.InvalidBase64Format
 
 import scala.util.Try
 
-package object internal {
+package object internal extends EitherSyntax {
 
-  type Result[A] = Xor[Error, A]
+  type Result[A] = Either[Error, A]
 
   val Base64Decoder = Base64.getUrlDecoder
   val Base64Encoder = Base64.getUrlEncoder.withoutPadding
@@ -22,8 +22,8 @@ package object internal {
   }
 
   def extractBytesFromBase64(base64String: String): Result[Array[Byte]] = {
-    Xor.fromTry(Try(Base64Decoder.decode(base64String)))
-      .leftMap(_ => InvalidBase64Format(base64String))
+    Try(Base64Decoder.decode(base64String))
+      .toEither.leftMap(_ => InvalidBase64Format(base64String))
   }
 
   def extractStringFromBase64(base64String: String): Result[String] = {

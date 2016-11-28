@@ -1,2 +1,2 @@
-addSbtPlugin("com.timushev.sbt" % "sbt-updates" % "0.2.0")
-addSbtPlugin("org.scoverage" % "sbt-scoverage" % "1.4.0")
+addSbtPlugin("com.timushev.sbt" % "sbt-updates" % "0.2.0") //dependencyUpdates
+addSbtPlugin("org.scoverage" % "sbt-scoverage" % "1.5.0")

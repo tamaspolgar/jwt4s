@@ -1,6 +1,5 @@
 package com.menzus.jwt4s.internal
 
-import cats.data.Xor
 import com.menzus.jwt4s.DummyClock
 import com.menzus.jwt4s.DummySettings
 import com.menzus.jwt4s.error
@@ -10,6 +9,10 @@ import org.scalatest.Matchers
 import org.scalatest.WordSpec
 
 class HSAlgorithmSpec extends WordSpec with Matchers {
+
+  implicit val clock = DummyClock.fixedClock
+  implicit val signerSettings = DummySettings.signerSettings
+  implicit val verifierSettings = DummySettings.verifierSettings
 
   "createSignature" should {
 
@@ -50,7 +53,7 @@ class HSAlgorithmSpec extends WordSpec with Matchers {
         Hs256Header,
         Payload,
         ValidSignatureHS256
-      ) shouldBe Xor.Right(ValidSignatureHS256)
+      ) shouldBe Right(ValidSignatureHS256)
     }
 
     "accept and return with the verified signature for HS384" in {
@@ -60,7 +63,7 @@ class HSAlgorithmSpec extends WordSpec with Matchers {
         Hs384Header,
         Payload,
         ValidSignatureHS384
-      ) shouldBe Xor.Right(ValidSignatureHS384)
+      ) shouldBe Right(ValidSignatureHS384)
     }
 
     "accept and return with the verified signature for HS512" in {
@@ -70,7 +73,7 @@ class HSAlgorithmSpec extends WordSpec with Matchers {
         Hs512Header,
         Payload,
         ValidSignatureHS512
-      ) shouldBe Xor.Right(ValidSignatureHS512)
+      ) shouldBe Right(ValidSignatureHS512)
     }
 
     "reject invalid signature" in {
@@ -80,7 +83,7 @@ class HSAlgorithmSpec extends WordSpec with Matchers {
         Hs256Header,
         Payload,
         InvalidSignatureHS256
-      ) shouldBe Xor.Left(error.InvalidSignature)
+      ) shouldBe Left(error.InvalidSignature)
     }
 
     "reject invalid short signature" in {
@@ -90,13 +93,9 @@ class HSAlgorithmSpec extends WordSpec with Matchers {
         Hs256Header,
         Payload,
         InvalidShortSignatureHS256
-      ) shouldBe Xor.Left(error.InvalidSignature)
+      ) shouldBe Left(error.InvalidSignature)
     }
   }
-
-  implicit val clock = DummyClock.fixedClock
-  implicit val signerSettings = DummySettings.signerSettings
-  implicit val verifierSettings = DummySettings.verifierSettings
 
   val Hs256Header = asBase64("""{"alg":"HS256","typ":"JWT"}""")
   val Hs384Header = asBase64("""{"alg":"HS384","typ":"JWT"}""")

@@ -20,6 +20,8 @@ case class FailedToParseClaims(claims: String) extends Error
 
 case object NoSubClaimProvided extends Error
 
+case object NoRfpClaimProvided extends Error
+
 case object NoAudClaimProvided extends Error
 case class InvalidAudClaim(aud: String) extends Error
 
