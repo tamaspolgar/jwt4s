@@ -23,11 +23,11 @@ object SignerSettings {
     val jwtConfig = Settings.jwtConfig(config)
 
     SignerSettings(
-      hmacSecretKey = Settings.hmacSecretKey(jwtConfig),
-      algorithm = Settings.asAlgorithm(jwtConfig.getString("algorithm"), "algorithm"),
+      hmacSecretKey = Settings.hmacSecretKey(jwtConfig, "hmac-secret-key-base64"),
+      algorithm = Settings.asAlgorithm(jwtConfig, "signer.algorithm"),
       audience = jwtConfig.getString("audience"),
       issuer = jwtConfig.getString("issuer"),
-      expiresInS = jwtConfig.getDuration("expires-in").getSeconds
+      expiresInS = jwtConfig.getDuration("signer.expires-in").getSeconds
     )
   }
 }
@@ -39,7 +39,7 @@ case class VerifierSettings (
   val acceptedAlgHeaders: Set[Algorithm],
   val expToleranceInS: Long,
   val iatToleranceInS: Long,
-  val maxLifeTime: Long
+  val maxLifeTimeInS: Long
 )
 
 object VerifierSettings {
@@ -48,14 +48,13 @@ object VerifierSettings {
     val jwtConfig = Settings.jwtConfig(config)
 
     VerifierSettings(
-      hmacSecretKey = Settings.hmacSecretKey(jwtConfig),
+      hmacSecretKey = Settings.hmacSecretKey(jwtConfig, "hmac-secret-key-base64"),
       audience = jwtConfig.getString("audience"),
       issuer = jwtConfig.getString("issuer"),
-      acceptedAlgHeaders = asScalaBuffer(jwtConfig.getStringList("accepted-alg-headers")).toSet[String]
-        .map(alg => Settings.asAlgorithm(alg, "accepted-alg-headers")),
-      expToleranceInS = jwtConfig.getDuration("exp.tolerance").getSeconds,
-      iatToleranceInS = jwtConfig.getDuration("iat.tolerance").getSeconds,
-      maxLifeTime = jwtConfig.getDuration("max-life-time").getSeconds
+      acceptedAlgHeaders = Settings.asAlgHeaders(jwtConfig, "verifier.accepted-alg-headers"),
+      expToleranceInS = jwtConfig.getDuration("verifier.exp.tolerance").getSeconds,
+      iatToleranceInS = jwtConfig.getDuration("verifier.iat.tolerance").getSeconds,
+      maxLifeTimeInS = jwtConfig.getDuration("verifier.max-life-time").getSeconds
     )
   }
 }
@@ -65,12 +64,22 @@ object Settings {
 
   def jwtConfig(config: Config) = config.withFallback(referenceConfig).getConfig("jwt")
 
-  def hmacSecretKey(jwtConfig: Config) = {
-    extractBytesFromBase64(jwtConfig.getString("hmac-secret-key-base64"))
-      .getOrElse(throw new BadValue("hmac-secret-key-base64", "not a valid base64 encoded string"))
+  def hmacSecretKey(jwtConfig: Config, path: String) = {
+    extractBytesFromBase64(jwtConfig.getString(path))
+      .getOrElse(throw new BadValue(path, "not a valid base64 encoded string"))
   }
 
-  def asAlgorithm(alg: String, path: String) = {
-    algHeaderToAlgorithm(alg).getOrElse(throw new BadValue(path, s"unknown algorithm $alg"))
+  def asAlgorithm(alg: String, path: String): Algorithm = {
+    algHeaderToAlgorithm(alg)
+      .getOrElse(throw new BadValue(path, s"unknown algorithm $alg"))
+  }
+
+  def asAlgorithm(jwtConfig: Config, path: String): Algorithm = {
+    asAlgorithm(jwtConfig.getString(path), path)
+  }
+
+  def asAlgHeaders(jwtConfig: Config, path: String) = {
+    asScalaBuffer(jwtConfig.getStringList(path)).toSet[String]
+      .map(alg => Settings.asAlgorithm(alg, path))
   }
 }

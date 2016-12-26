@@ -62,7 +62,7 @@ object Payload {
       aud    <- verifyAud(claims.aud, settings.audience)
       exp    <- verifyExp(claims.exp, settings.expToleranceInS, nowInS)
       iat    <- verifyIat(claims.iat, settings.iatToleranceInS, nowInS)
-      _      <- verifyLifeTime(iat, exp, settings.maxLifeTime)
+      _      <- verifyLifeTime(iat, exp, settings.maxLifeTimeInS)
     } yield IdClaims(iss, sub, aud, exp, iat, claims.roles.getOrElse(Set.empty))
   }
 

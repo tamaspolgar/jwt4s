@@ -23,6 +23,6 @@ object DummySettings {
     acceptedAlgHeaders = Set(Hs256, Hs384, Hs512),
     expToleranceInS = 1,
     iatToleranceInS = 1,
-    maxLifeTime = 2
+    maxLifeTimeInS = 2
   )
 }

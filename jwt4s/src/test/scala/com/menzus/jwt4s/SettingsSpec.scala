@@ -41,7 +41,7 @@ class SettingsSpec extends WordSpec with Matchers {
         SignerSettings(
           ConfigFactory.parseString(
             """
-              |jwt {
+              |jwt.signer {
               |  algorithm = "unsupported"
               |}
             """.stripMargin
@@ -63,6 +63,7 @@ class SettingsSpec extends WordSpec with Matchers {
       verifierSettings.acceptedAlgHeaders shouldBe Set(Hs256)
       verifierSettings.expToleranceInS shouldBe 60
       verifierSettings.iatToleranceInS shouldBe 60
+      verifierSettings.maxLifeTimeInS shouldBe 3600
     }
 
     "fail if the hmac secret is not a valid base 64 string" in {
