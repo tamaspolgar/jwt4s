@@ -15,7 +15,7 @@ import akka.http.scaladsl.server.Directives.path
 import akka.http.scaladsl.testkit.ScalatestRouteTest
 import com.menzus.jwt4s.Verifier
 import com.menzus.jwt4s.error.InvalidSignature
-import com.menzus.jwt4s.internal.IdClaims
+import com.menzus.jwt4s.internal.Claims
 import com.menzus.jwt4s.internal.Result
 import org.scalatest.Matchers
 import org.scalatest.WordSpec
@@ -91,8 +91,8 @@ class JwtDirectivesSpec extends WordSpec with Matchers with ScalatestRouteTest {
 
   implicit val verifier = new Verifier {
 
-    def verifyAndExtractIdClaims(jwtToken: String): Result[IdClaims] = {
-      val noRoles = IdClaims(
+    def verifyAndExtractClaims(jwtToken: String): Result[Claims] = {
+      val noRoles = Claims(
         iss = "issuer",
         sub = "subject",
         aud = "audience",

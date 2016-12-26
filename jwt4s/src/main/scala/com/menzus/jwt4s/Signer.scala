@@ -5,7 +5,7 @@ import java.time.Clock
 import com.menzus.jwt4s.internal.Algorithm.createSignature
 import com.menzus.jwt4s.internal.Header.asHeaderBase64
 import com.menzus.jwt4s.internal.Header.createHeader
-import com.menzus.jwt4s.internal.Payload.createIdClaimsFor
+import com.menzus.jwt4s.internal.Payload.createClaimsFor
 
 case class Token(idToken: String, expiresIn: Long)
 
@@ -25,7 +25,7 @@ object Signer {
     def signSubjectAndRoles(sub: String, roles: Set[String]): Token = {
       val header          = createHeader(settings.algorithm)
       val headerBase64    = asHeaderBase64(header)
-      val claimsBase64    = createIdClaimsFor(sub, roles)
+      val claimsBase64    = createClaimsFor(sub, roles)
       val signatureBase64 = createSignature(header, headerBase64, claimsBase64)
 
       Token(

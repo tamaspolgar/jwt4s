@@ -14,8 +14,8 @@ import com.menzus.jwt4s.error.NoExpClaimProvided
 import com.menzus.jwt4s.error.NoIatClaimProvided
 import com.menzus.jwt4s.error.NoIssClaimProvided
 import com.menzus.jwt4s.error.NoSubClaimProvided
-import com.menzus.jwt4s.internal.Payload.createIdClaimsFor
-import com.menzus.jwt4s.internal.Payload.verifyAndExtractIdClaims
+import com.menzus.jwt4s.internal.Payload.createClaimsFor
+import com.menzus.jwt4s.internal.Payload.verifyAndExtractClaims
 import org.scalatest.Matchers
 import org.scalatest.WordSpec
 
@@ -25,29 +25,29 @@ class ClaimsSpec extends WordSpec with Matchers {
   implicit val signerSettings = DummySettings.signerSettings
   implicit val verifierSettings = DummySettings.verifierSettings
 
-  "createIdClaimsFor" should {
+  "createClaimsFor" should {
 
     "create id claims for the subject and roles" in {
 
-      createIdClaimsFor("subject", Set("admin")) shouldBe
+      createClaimsFor("subject", Set("admin")) shouldBe
         asBase64("""{"iss":"issuer","sub":"subject","aud":"audience","exp":1,"iat":0,"roles":["admin"]}""")
     }
 
     "create id claims for the subject without roles" in {
 
-      createIdClaimsFor("subject", Set.empty) shouldBe
+      createClaimsFor("subject", Set.empty) shouldBe
         asBase64("""{"iss":"issuer","sub":"subject","aud":"audience","exp":1,"iat":0}""")
     }
   }
 
-  "verifyAndExtractIdClaims" should {
+  "verifyAndExtractClaims" should {
 
     "accept and return valid claims" in {
 
-      verifyAndExtractIdClaims(
+      verifyAndExtractClaims(
         asBase64(s"""{"aud":"audience","sub":"subject","iss":"issuer","iat":$TMinus1,"exp":$TPlus1,"roles":["role1","role2"]}""")
       ) shouldBe Right(
-        IdClaims(
+        Claims(
           iss = "issuer",
           sub = "subject",
           aud = "audience",
@@ -60,10 +60,10 @@ class ClaimsSpec extends WordSpec with Matchers {
 
     "accept iat within the tolerance" in {
 
-      verifyAndExtractIdClaims(
+      verifyAndExtractClaims(
         asBase64(s"""{"aud":"audience","sub":"subject","iss":"issuer","iat":$TPlus1,"exp":$TPlus2}""")
       ) shouldBe Right(
-        IdClaims(
+        Claims(
           iss = "issuer",
           sub = "subject",
           aud = "audience",
@@ -77,10 +77,10 @@ class ClaimsSpec extends WordSpec with Matchers {
 
     "accept exp within the tolerance" in {
 
-      verifyAndExtractIdClaims(
+      verifyAndExtractClaims(
         asBase64(s"""{"aud":"audience","sub":"subject","iss":"issuer","iat":$TMinus2,"exp":$TMinus1}""")
       ) shouldBe Right(
-        IdClaims(
+        Claims(
           iss = "issuer",
           sub = "subject",
           aud = "audience",
@@ -93,80 +93,80 @@ class ClaimsSpec extends WordSpec with Matchers {
 
     "reject invalid json claims" in {
 
-      verifyAndExtractIdClaims(asBase64(s"""not json""")) shouldBe Left(FailedToParseClaims("""not json"""))
+      verifyAndExtractClaims(asBase64(s"""not json""")) shouldBe Left(FailedToParseClaims("""not json"""))
     }
 
     "reject non base64 payload" in {
 
-      verifyAndExtractIdClaims("non base64") shouldBe Left(InvalidBase64Format("non base64"))
+      verifyAndExtractClaims("non base64") shouldBe Left(InvalidBase64Format("non base64"))
     }
 
     "reject header with missing subject" in {
 
-      verifyAndExtractIdClaims(asBase64(s"""{"aud":"audience","iss":"issuer","iat":-1,"exp":1}""")) shouldBe
+      verifyAndExtractClaims(asBase64(s"""{"aud":"audience","iss":"issuer","iat":-1,"exp":1}""")) shouldBe
         Left(NoSubClaimProvided)
     }
 
     "reject header with missing audience" in {
 
-      verifyAndExtractIdClaims(asBase64(s"""{"sub":"subject","iss":"issuer","iat":-1,"exp":1}""")) shouldBe
+      verifyAndExtractClaims(asBase64(s"""{"sub":"subject","iss":"issuer","iat":-1,"exp":1}""")) shouldBe
         Left(NoAudClaimProvided)
     }
 
     "reject header with wrong audience" in {
 
-      verifyAndExtractIdClaims(asBase64(s"""{"aud":"other audience","sub":"subject","iss":"issuer","iat":-1,"exp":1}""")) shouldBe
+      verifyAndExtractClaims(asBase64(s"""{"aud":"other audience","sub":"subject","iss":"issuer","iat":-1,"exp":1}""")) shouldBe
         Left(InvalidAudClaim("other audience"))
     }
 
     "reject header with missing issuer" in {
 
-      verifyAndExtractIdClaims(asBase64(s"""{"aud":"audience","sub":"subject","iat":-1,"exp":1}""")) shouldBe
+      verifyAndExtractClaims(asBase64(s"""{"aud":"audience","sub":"subject","iat":-1,"exp":1}""")) shouldBe
         Left(NoIssClaimProvided)
     }
 
     "reject header with wrong issuer" in {
 
-      verifyAndExtractIdClaims(asBase64(s"""{"aud":"audience","sub":"subject","iss":"other issuer","iat":-1,"exp":1}""")) shouldBe
+      verifyAndExtractClaims(asBase64(s"""{"aud":"audience","sub":"subject","iss":"other issuer","iat":-1,"exp":1}""")) shouldBe
         Left(InvalidIssClaim("other issuer"))
     }
 
     "reject header with missing exp" in {
 
-      verifyAndExtractIdClaims(asBase64(s"""{"aud":"audience","sub":"subject","iss":"issuer","iat":-1}""")) shouldBe
+      verifyAndExtractClaims(asBase64(s"""{"aud":"audience","sub":"subject","iss":"issuer","iat":-1}""")) shouldBe
         Left(NoExpClaimProvided)
     }
 
     "reject header with out of tolerance expired exp" in {
 
-      verifyAndExtractIdClaims(
+      verifyAndExtractClaims(
         asBase64(s"""{"aud":"audience","sub":"subject","iss":"issuer","iat":$TMinus3,"exp":$TMinus2}""")) shouldBe
         Left(ExpiredExpClaim(TMinus2, T0))
     }
 
     "reject header with missing iat" in {
 
-      verifyAndExtractIdClaims(asBase64(s"""{"aud":"audience","sub":"subject","iss":"issuer","exp":$TPlus1}""")) shouldBe
+      verifyAndExtractClaims(asBase64(s"""{"aud":"audience","sub":"subject","iss":"issuer","exp":$TPlus1}""")) shouldBe
         Left(NoIatClaimProvided)
     }
 
     "reject header with out of tolerance future iat" in {
 
-      verifyAndExtractIdClaims(
+      verifyAndExtractClaims(
         asBase64(s"""{"aud":"audience","sub":"subject","iss":"issuer","iat":$TPlus2,"exp":$TPlus3}""")) shouldBe
         Left(FutureIatClaim(TPlus2, T0))
     }
 
     "reject header with too long life time" in {
 
-      verifyAndExtractIdClaims(
+      verifyAndExtractClaims(
         asBase64(s"""{"aud":"audience","sub":"subject","iss":"issuer","iat":$TMinus2,"exp":$TPlus2}""")) shouldBe
         Left(InvalidLifeTime)
     }
 
     "reject header if iat is after exp" in {
 
-      verifyAndExtractIdClaims(
+      verifyAndExtractClaims(
         asBase64(s"""{"aud":"audience","sub":"subject","iss":"issuer","iat":$TPlus1,"exp":$TMinus1}""")) shouldBe
         Left(InvalidLifeTime)
     }

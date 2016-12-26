@@ -3,14 +3,14 @@ package com.menzus.jwt4s
 import java.time.Clock
 
 import com.menzus.jwt4s.internal.Algorithm.verifySignature
-import com.menzus.jwt4s.internal.IdClaims
+import com.menzus.jwt4s.internal.Claims
 import com.menzus.jwt4s.internal.Header.verifyAndExtractHeader
-import com.menzus.jwt4s.internal.Payload.{verifyAndExtractIdClaims => verifyAndExtractIdClaimsPayload}
+import com.menzus.jwt4s.internal.Payload.{verifyAndExtractClaims => verifyAndExtractIdClaimsPayload}
 import com.menzus.jwt4s.internal.RawParts.verifyAndExtractRawParts
 import com.menzus.jwt4s.internal.Result
 
 trait Verifier {
-  def verifyAndExtractIdClaims(jwtToken: String): Result[IdClaims]
+  def verifyAndExtractClaims(jwtToken: String): Result[Claims]
 }
 
 object Verifier {
@@ -19,7 +19,7 @@ object Verifier {
 
     implicit val _settings = settings
 
-    def verifyAndExtractIdClaims(jwtToken: String): Result[IdClaims] = for {
+    def verifyAndExtractClaims(jwtToken: String): Result[Claims] = for {
       rawParts <- verifyAndExtractRawParts(jwtToken)
       header   <- verifyAndExtractHeader(rawParts.headerBase64)
       claims   <- verifyAndExtractIdClaimsPayload(rawParts.payloadBase64)

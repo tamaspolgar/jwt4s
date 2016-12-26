@@ -19,7 +19,7 @@ import io.circe.Decoder
 import io.circe.Json
 import io.circe.parser.decode
 
-case class IdClaims( // todo this interface is trerrible
+case class Claims(
   iss: String,
   sub: String,
   aud: String,
@@ -30,7 +30,7 @@ case class IdClaims( // todo this interface is trerrible
 
 object Payload {
 
-  def createIdClaimsFor(sub: String, roles: Set[String])(implicit settings: SignerSettings, clock: Clock): String = {
+  def createClaimsFor(sub: String, roles: Set[String])(implicit settings: SignerSettings, clock: Clock): String = {
     val nowInS = clock.instant.getEpochSecond
 
     val requiredClaims = Seq(
@@ -52,21 +52,21 @@ object Payload {
     asBase64(idClaims.noSpaces)
   }
 
-  def verifyAndExtractIdClaims(payloadBase64: String)(implicit settings: VerifierSettings, clock: Clock): Result[IdClaims] = {
+  def verifyAndExtractClaims(payloadBase64: String)(implicit settings: VerifierSettings, clock: Clock): Result[Claims] = {
     val nowInS = clock.instant.getEpochSecond
 
     for {
-      claims <- decodeIdClaims(payloadBase64)
+      claims <- decodeClaims(payloadBase64)
       iss    <- verifyIss(claims.iss, settings.issuer)
       sub    <- verifySub(claims.sub)
       aud    <- verifyAud(claims.aud, settings.audience)
       exp    <- verifyExp(claims.exp, settings.expToleranceInS, nowInS)
       iat    <- verifyIat(claims.iat, settings.iatToleranceInS, nowInS)
       _      <- verifyLifeTime(iat, exp, settings.maxLifeTimeInS)
-    } yield IdClaims(iss, sub, aud, exp, iat, claims.roles.getOrElse(Set.empty))
+    } yield Claims(iss, sub, aud, exp, iat, claims.roles.getOrElse(Set.empty))
   }
 
-  private case class RawIdClaims(
+  private case class RawClaims(
     iss: Option[String],
     sub: Option[String],
     aud: Option[String],
@@ -75,7 +75,7 @@ object Payload {
     roles: Option[Set[String]]
   )
 
-  private implicit val idClaimsDecoder: Decoder[RawIdClaims] = Decoder.instance[RawIdClaims] { c =>
+  private implicit val claimsDecoder: Decoder[RawClaims] = Decoder.instance[RawClaims] { c =>
     for {
       iss   <- c.downField("iss").as[Option[String]]
       sub   <- c.downField("sub").as[Option[String]]
@@ -83,12 +83,12 @@ object Payload {
       exp   <- c.downField("exp").as[Option[Long]]
       iat   <- c.downField("iat").as[Option[Long]]
       roles <- c.downField("roles").as[Option[Set[String]]]
-    } yield RawIdClaims(iss, sub, aud, exp, iat, roles)
+    } yield RawClaims(iss, sub, aud, exp, iat, roles)
   }
 
-  private def decodeIdClaims(payloadBase64: String): Result[RawIdClaims] = for {
+  private def decodeClaims(payloadBase64: String): Result[RawClaims] = for {
     payload <- extractStringFromBase64(payloadBase64)
-    claims  <- decode[RawIdClaims](payload).leftMap(_ => FailedToParseClaims(payload))
+    claims  <- decode[RawClaims](payload).leftMap(_ => FailedToParseClaims(payload))
   } yield claims
 
   private def verifyIss(iss: Option[String], issuer: String): Result[String] = for {
