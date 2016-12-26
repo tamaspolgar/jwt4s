@@ -9,31 +9,23 @@ import com.menzus.jwt4s.error.FailedToParseClaims
 import com.menzus.jwt4s.error.FutureIatClaim
 import com.menzus.jwt4s.error.InvalidAudClaim
 import com.menzus.jwt4s.error.InvalidIssClaim
+import com.menzus.jwt4s.error.InvalidLifeTime
 import com.menzus.jwt4s.error.NoAudClaimProvided
 import com.menzus.jwt4s.error.NoExpClaimProvided
 import com.menzus.jwt4s.error.NoIatClaimProvided
 import com.menzus.jwt4s.error.NoIssClaimProvided
-import com.menzus.jwt4s.error.NoRfpClaimProvided
 import com.menzus.jwt4s.error.NoSubClaimProvided
 import io.circe.Decoder
 import io.circe.Json
 import io.circe.parser.decode
 
-case class IdClaims(
+case class IdClaims( // todo this interface is trerrible
   iss: String,
   sub: String,
   aud: String,
   exp: Long,
   iat: Long,
   roles: Set[String] = Set.empty
-)
-
-case class RfpClaims(
-  iss: String,
-  rfp: String,
-  aud: String,
-  exp: Long,
-  iat: Long
 )
 
 object Payload {
@@ -60,20 +52,6 @@ object Payload {
     asBase64(idClaims.noSpaces)
   }
 
-  def createRfpClaimsFor(rfp: String)(implicit settings: SignerSettings, clock: Clock): String = {
-    val nowInS = clock.instant.getEpochSecond
-
-    val rfpClaims = Json.obj(
-      "iss" -> Json.fromString(settings.issuer),
-      "rfp" -> Json.fromString(rfp),
-      "aud" -> Json.fromString(settings.audience),
-      "exp" -> Json.fromLong(nowInS + settings.expiresInS),
-      "iat" -> Json.fromLong(nowInS)
-    )
-
-    asBase64(rfpClaims.noSpaces)
-  }
-
   def verifyAndExtractIdClaims(payloadBase64: String)(implicit settings: VerifierSettings, clock: Clock): Result[IdClaims] = {
     val nowInS = clock.instant.getEpochSecond
 
@@ -84,20 +62,8 @@ object Payload {
       aud    <- verifyAud(claims.aud, settings.audience)
       exp    <- verifyExp(claims.exp, settings.expToleranceInS, nowInS)
       iat    <- verifyIat(claims.iat, settings.iatToleranceInS, nowInS)
+      _      <- verifyLifeTime(iat, exp, settings.maxLifeTime)
     } yield IdClaims(iss, sub, aud, exp, iat, claims.roles.getOrElse(Set.empty))
-  }
-
-  def verifyAndExtractRfpClaims(payloadBase64: String)(implicit settings: VerifierSettings, clock: Clock): Result[RfpClaims] = {
-    val nowInS = clock.instant.getEpochSecond
-
-    for {
-      claims <- decodeRfpClaims(payloadBase64)
-      iss    <- verifyIss(claims.iss, settings.issuer)
-      rfp    <- verifyRfp(claims.rfp)
-      aud    <- verifyAud(claims.aud, settings.audience)
-      exp    <- verifyExp(claims.exp, settings.expToleranceInS, nowInS)
-      iat    <- verifyIat(claims.iat, settings.iatToleranceInS, nowInS)
-    } yield RfpClaims(iss, rfp, aud, exp, iat)
   }
 
   private case class RawIdClaims(
@@ -107,14 +73,6 @@ object Payload {
     exp: Option[Long],
     iat: Option[Long],
     roles: Option[Set[String]]
-  )
-
-  private case class RawRfpClaims(
-    iss: Option[String],
-    rfp: Option[String],
-    aud: Option[String],
-    exp: Option[Long],
-    iat: Option[Long]
   )
 
   private implicit val idClaimsDecoder: Decoder[RawIdClaims] = Decoder.instance[RawIdClaims] { c =>
@@ -128,24 +86,9 @@ object Payload {
     } yield RawIdClaims(iss, sub, aud, exp, iat, roles)
   }
 
-  private implicit val rfpClaimsDecoder: Decoder[RawRfpClaims] = Decoder.instance[RawRfpClaims] { c =>
-    for {
-      iss   <- c.downField("iss").as[Option[String]]
-      rfp   <- c.downField("rfp").as[Option[String]]
-      aud   <- c.downField("aud").as[Option[String]]
-      exp   <- c.downField("exp").as[Option[Long]]
-      iat   <- c.downField("iat").as[Option[Long]]
-    } yield RawRfpClaims(iss, rfp, aud, exp, iat)
-  }
-
   private def decodeIdClaims(payloadBase64: String): Result[RawIdClaims] = for {
     payload <- extractStringFromBase64(payloadBase64)
     claims  <- decode[RawIdClaims](payload).leftMap(_ => FailedToParseClaims(payload))
-  } yield claims
-
-  private def decodeRfpClaims(payloadBase64: String): Result[RawRfpClaims] = for {
-    payload <- extractStringFromBase64(payloadBase64)
-    claims  <- decode[RawRfpClaims](payload).leftMap(_ => FailedToParseClaims(payload))
   } yield claims
 
   private def verifyIss(iss: Option[String], issuer: String): Result[String] = for {
@@ -155,10 +98,6 @@ object Payload {
 
   private def verifySub(sub: Option[String]): Result[String] = {
     sub.toRight(NoSubClaimProvided)
-  }
-
-  private def verifyRfp(rfp: Option[String]): Result[String] = {
-    rfp.toRight(NoRfpClaimProvided)
   }
 
   private def verifyAud(aud: Option[String], audience: String): Result[String] = for {
@@ -175,4 +114,12 @@ object Payload {
     iat <- iat.toRight(NoIatClaimProvided)
     _   <- Some(iat).filter(iat => (iat - tolerance) <= nowInS).toRight(FutureIatClaim(iat, nowInS))
   } yield iat
+
+  private def verifyLifeTime(iat: Long, exp: Long, maxLifeTime: Long) = {
+    if (iat <= exp && exp - iat <= maxLifeTime) {
+      Right(exp - iat)
+    } else {
+      Left(InvalidLifeTime)
+    }
+  }
 }

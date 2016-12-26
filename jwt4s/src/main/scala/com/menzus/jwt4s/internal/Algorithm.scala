@@ -1,5 +1,6 @@
 package com.menzus.jwt4s.internal
 
+import java.security.MessageDigest
 import javax.crypto.Mac
 import javax.crypto.spec.SecretKeySpec
 
@@ -8,64 +9,53 @@ import com.menzus.jwt4s.VerifierSettings
 import com.menzus.jwt4s.error.InvalidAlgHeader
 import com.menzus.jwt4s.error.InvalidSignature
 
-import scala.annotation.tailrec
-
 sealed trait Algorithm
 
 sealed abstract class Hs(javaMacAlgName: String) extends Algorithm {
 
-  final def sign(message: String, hmacSecretKey: Array[Byte]): String = {
+  def sign(message: String, hmacSecretKey: Array[Byte]): String = {
     val key = new SecretKeySpec(hmacSecretKey, javaMacAlgName)
 
     val mutableMac = Mac.getInstance(javaMacAlgName)
     mutableMac.init(key)
-    mutableMac.update(bytesFromString(message))
+    mutableMac.update(bytesFromUTF8String(message))
 
     base64FromBytes(mutableMac.doFinal)
   }
 
-  final def verify(message: String, providedSignatureBase64: String, hmacSecretKey: Array[Byte]): Result[String] = {
+  def verify(message: String, providedSignatureBase64: String, hmacSecretKey: Array[Byte]): Result[String] = {
+    for {
+      signature <- extractSignatureBytes(providedSignatureBase64)
+      _         <- verify(message, signature, hmacSecretKey)
+    } yield providedSignatureBase64
+  }
+
+  private def extractSignatureBytes(providedSignatureBase64: String) = {
+    extractBytesFromBase64(providedSignatureBase64)
+      .leftMap(_ => InvalidSignature)
+  }
+
+  private def verify(message: String, providedSignature: Array[Byte], hmacSecretKey: Array[Byte]): Result[Array[Byte]] = {
     val key = new SecretKeySpec(hmacSecretKey, javaMacAlgName)
 
     val mutableMac = Mac.getInstance(javaMacAlgName)
     mutableMac.init(key)
-    mutableMac.update(bytesFromString(message))
-    val calculatedSignatureBase64 = base64FromBytes(mutableMac.doFinal)
+    mutableMac.update(bytesFromUTF8String(message))
+    val calculatedSignature = mutableMac.doFinal
 
-    if (secureDigestEquals(calculatedSignatureBase64, providedSignatureBase64)) {
-      Right(providedSignatureBase64)
+    if (MessageDigest.isEqual(calculatedSignature, providedSignature)) {
+      Right(providedSignature)
     } else {
       Left(InvalidSignature)
     }
-  }
-
-  private def bytesFromString(string: String): Array[Byte] = {
-    string.getBytes(UTF8)
   }
 
   private def base64FromBytes(bytes: Array[Byte]): String = {
     Base64Encoder.encodeToString(bytes)
   }
 
-  private def secureDigestEquals(s1: String, s2: String): Boolean = {
-
-    @tailrec
-    def secureDigestEquals(b1: Array[Byte], b2: Array[Byte], index: Int, acc: Int): Boolean = {
-      if (index < b1.length) {
-        secureDigestEquals(b1, b2, index + 1, acc | (b1(index) ^ b2(index)))
-      } else {
-        acc == 0
-      }
-    }
-
-    val b1 = s1.getBytes(UTF8)
-    val b2 = s2.getBytes(UTF8)
-
-    if (b1.length == b2.length) {
-      secureDigestEquals(b1, b2, 0, 0)
-    } else {
-      false
-    }
+  private def bytesFromUTF8String(string: String): Array[Byte] = {
+    string.getBytes(UTF8)
   }
 }
 
@@ -83,11 +73,11 @@ object Algorithm {
     }
   }
 
-  def verifySignature(header: Header, headerBase64: String, payloadBase64: String, signatureBase64: String)(implicit settings: VerifierSettings): Result[String] = {
+  def verifySignature(header: Header, headerBase64: String, payloadBase64: String, providedSignatureBase64: String)(implicit settings: VerifierSettings): Result[String] = {
     val unsignedToken = asUnsignedToken(headerBase64, payloadBase64)
 
     header match {
-      case HsHeader(alg) => hsVerify(alg, unsignedToken, signatureBase64, settings.hmacSecretKey)
+      case HsHeader(alg) => hsVerify(alg, unsignedToken, providedSignatureBase64, settings.hmacSecretKey)
     }
   }
 
@@ -108,8 +98,8 @@ object Algorithm {
     List(headerBase64, payloadBase64).mkString(".")
   }
 
-  private def hsVerify(hs: Hs, unsignedToken: String, signatureBase64: String, hsSecretKey: Array[Byte]) = {
-    hs.verify(unsignedToken, signatureBase64, hsSecretKey)
+  private def hsVerify(hs: Hs, unsignedToken: String, providedSignatureBase64: String, hsSecretKey: Array[Byte]) = {
+    hs.verify(unsignedToken, providedSignatureBase64, hsSecretKey)
   }
 
   private def hsSign(hs: Hs, unsignedToken: String, hsSecretKey: Array[Byte]) = {

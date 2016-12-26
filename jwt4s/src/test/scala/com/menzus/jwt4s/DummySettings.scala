@@ -8,7 +8,7 @@ object DummySettings {
 
   val signerSettings = SignerSettings(
 
-    hmacSecretKey = Array[Int](0xB1, 0xE7, 0x2B, 0x7A).map(_.toByte), //base64(secret)
+    hmacSecretKey =  internal.extractBytesFromBase64("secret").right.get,
     algorithm = Hs256,
     audience = "audience",
     issuer = "issuer",
@@ -17,11 +17,12 @@ object DummySettings {
 
   val verifierSettings = VerifierSettings(
 
-    hmacSecretKey = Array[Int](0xB1, 0xE7, 0x2B, 0x7A).map(_.toByte), //base64(secret)
+    hmacSecretKey = internal.extractBytesFromBase64("secret").right.get,
     audience = "audience",
     issuer = "issuer",
     acceptedAlgHeaders = Set(Hs256, Hs384, Hs512),
     expToleranceInS = 1,
-    iatToleranceInS = 1
+    iatToleranceInS = 1,
+    maxLifeTime = 2
   )
 }

@@ -8,16 +8,14 @@ import com.menzus.jwt4s.error.FutureIatClaim
 import com.menzus.jwt4s.error.InvalidAudClaim
 import com.menzus.jwt4s.error.InvalidBase64Format
 import com.menzus.jwt4s.error.InvalidIssClaim
+import com.menzus.jwt4s.error.InvalidLifeTime
 import com.menzus.jwt4s.error.NoAudClaimProvided
 import com.menzus.jwt4s.error.NoExpClaimProvided
 import com.menzus.jwt4s.error.NoIatClaimProvided
 import com.menzus.jwt4s.error.NoIssClaimProvided
-import com.menzus.jwt4s.error.NoRfpClaimProvided
 import com.menzus.jwt4s.error.NoSubClaimProvided
 import com.menzus.jwt4s.internal.Payload.createIdClaimsFor
-import com.menzus.jwt4s.internal.Payload.createRfpClaimsFor
 import com.menzus.jwt4s.internal.Payload.verifyAndExtractIdClaims
-import com.menzus.jwt4s.internal.Payload.verifyAndExtractRfpClaims
 import org.scalatest.Matchers
 import org.scalatest.WordSpec
 
@@ -39,15 +37,6 @@ class ClaimsSpec extends WordSpec with Matchers {
 
       createIdClaimsFor("subject", Set.empty) shouldBe
         asBase64("""{"iss":"issuer","sub":"subject","aud":"audience","exp":1,"iat":0}""")
-    }
-  }
-
-  "createRfpClaimsFor" should {
-
-    "create rfp claims for the rfp token" in {
-
-      createRfpClaimsFor("rfp token") shouldBe
-        asBase64("""{"iss":"issuer","rfp":"rfp token","aud":"audience","exp":1,"iat":0}""")
     }
   }
 
@@ -167,35 +156,19 @@ class ClaimsSpec extends WordSpec with Matchers {
         asBase64(s"""{"aud":"audience","sub":"subject","iss":"issuer","iat":$TPlus2,"exp":$TPlus3}""")) shouldBe
         Left(FutureIatClaim(TPlus2, T0))
     }
-  }
 
-  "verifyAndExtractRfpClaims" should {
+    "reject header with too long life time" in {
 
-    "accept and return valid claims" in {
-
-      verifyAndExtractRfpClaims(
-        asBase64(s"""{"aud":"audience","rfp":"rfp token","iss":"issuer","iat":$TMinus1,"exp":$TPlus1}""")
-      ) shouldBe Right(
-        RfpClaims(
-          iss = "issuer",
-          rfp = "rfp token",
-          aud = "audience",
-          exp = TPlus1,
-          iat = TMinus1
-        )
-      )
+      verifyAndExtractIdClaims(
+        asBase64(s"""{"aud":"audience","sub":"subject","iss":"issuer","iat":$TMinus2,"exp":$TPlus2}""")) shouldBe
+        Left(InvalidLifeTime)
     }
 
-    "reject with missing rfp claim" in {
+    "reject header if iat is after exp" in {
 
-      verifyAndExtractRfpClaims(
-        asBase64(s"""{"aud":"audience","iss":"issuer","iat":$TMinus1,"exp":$TPlus1}""")
-      ) shouldBe Left(NoRfpClaimProvided)
-    }
-
-    "reject invalid json claims" in {
-
-      verifyAndExtractRfpClaims(asBase64(s"""not json""")) shouldBe Left(FailedToParseClaims("""not json"""))
+      verifyAndExtractIdClaims(
+        asBase64(s"""{"aud":"audience","sub":"subject","iss":"issuer","iat":$TPlus1,"exp":$TMinus1}""")) shouldBe
+        Left(InvalidLifeTime)
     }
   }
 

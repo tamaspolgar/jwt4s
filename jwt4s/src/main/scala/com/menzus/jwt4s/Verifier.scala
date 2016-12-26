@@ -6,14 +6,11 @@ import com.menzus.jwt4s.internal.Algorithm.verifySignature
 import com.menzus.jwt4s.internal.IdClaims
 import com.menzus.jwt4s.internal.Header.verifyAndExtractHeader
 import com.menzus.jwt4s.internal.Payload.{verifyAndExtractIdClaims => verifyAndExtractIdClaimsPayload}
-import com.menzus.jwt4s.internal.Payload.{verifyAndExtractRfpClaims => verifyAndExtractRfpClaimsPayload}
 import com.menzus.jwt4s.internal.RawParts.verifyAndExtractRawParts
 import com.menzus.jwt4s.internal.Result
-import com.menzus.jwt4s.internal.RfpClaims
 
 trait Verifier {
   def verifyAndExtractIdClaims(jwtToken: String): Result[IdClaims]
-  def verifyAndExtractRfpClaims(jwtToken: String): Result[RfpClaims]
 }
 
 object Verifier {
@@ -26,13 +23,6 @@ object Verifier {
       rawParts <- verifyAndExtractRawParts(jwtToken)
       header   <- verifyAndExtractHeader(rawParts.headerBase64)
       claims   <- verifyAndExtractIdClaimsPayload(rawParts.payloadBase64)
-      _        <- verifySignature(header, rawParts.headerBase64, rawParts.payloadBase64, rawParts.signatureBase64)
-    } yield claims
-
-    def verifyAndExtractRfpClaims(jwtToken: String): Result[RfpClaims] = for {
-      rawParts <- verifyAndExtractRawParts(jwtToken)
-      header   <- verifyAndExtractHeader(rawParts.headerBase64)
-      claims   <- verifyAndExtractRfpClaimsPayload(rawParts.payloadBase64)
       _        <- verifySignature(header, rawParts.headerBase64, rawParts.payloadBase64, rawParts.signatureBase64)
     } yield claims
   }

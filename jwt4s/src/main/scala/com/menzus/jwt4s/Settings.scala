@@ -38,7 +38,8 @@ case class VerifierSettings (
   val issuer: String,
   val acceptedAlgHeaders: Set[Algorithm],
   val expToleranceInS: Long,
-  val iatToleranceInS: Long
+  val iatToleranceInS: Long,
+  val maxLifeTime: Long
 )
 
 object VerifierSettings {
@@ -53,7 +54,8 @@ object VerifierSettings {
       acceptedAlgHeaders = asScalaBuffer(jwtConfig.getStringList("accepted-alg-headers")).toSet[String]
         .map(alg => Settings.asAlgorithm(alg, "accepted-alg-headers")),
       expToleranceInS = jwtConfig.getDuration("exp.tolerance").getSeconds,
-      iatToleranceInS = jwtConfig.getDuration("iat.tolerance").getSeconds
+      iatToleranceInS = jwtConfig.getDuration("iat.tolerance").getSeconds,
+      maxLifeTime = jwtConfig.getDuration("max-life-time").getSeconds
     )
   }
 }

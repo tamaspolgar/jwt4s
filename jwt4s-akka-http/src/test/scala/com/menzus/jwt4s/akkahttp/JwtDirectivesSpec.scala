@@ -17,7 +17,6 @@ import com.menzus.jwt4s.Verifier
 import com.menzus.jwt4s.error.InvalidSignature
 import com.menzus.jwt4s.internal.IdClaims
 import com.menzus.jwt4s.internal.Result
-import com.menzus.jwt4s.internal.RfpClaims
 import org.scalatest.Matchers
 import org.scalatest.WordSpec
 
@@ -109,8 +108,6 @@ class JwtDirectivesSpec extends WordSpec with Matchers with ScalatestRouteTest {
         case _               => Left(InvalidSignature)
       }
     }
-
-    def verifyAndExtractRfpClaims(jwtToken: String): Result[RfpClaims] = ???
   }
 
   val testRoute =

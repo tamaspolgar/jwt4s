@@ -7,7 +7,6 @@ import com.menzus.jwt4s.error.InvalidAudClaim
 import com.menzus.jwt4s.error.InvalidIssClaim
 import com.menzus.jwt4s.error.InvalidSignature
 import com.menzus.jwt4s.internal.IdClaims
-import com.menzus.jwt4s.internal.RfpClaims
 import com.menzus.jwt4s.internal.asBase64
 import org.scalatest.Matchers
 import org.scalatest.WordSpec
@@ -93,37 +92,6 @@ class VerifierSpec extends WordSpec with Matchers {
           "notchecked"
       )  shouldBe
         Left(FutureIatClaim(2, 0))
-    }
-  }
-
-  "verifyAndExtractRfpClaims" should {
-
-    "accept and extract payload from valid JWT" in {
-
-      verifier.verifyAndExtractRfpClaims(
-        asBase64("""{"alg":"HS256","typ":"JWT"}""") + "." +
-          asBase64("""{"rfp":"rfp token","aud":"audience","iss":"issuer","iat":-1,"exp":1}""") + "." +
-          "c5XXfSQWRAIQ4RdyO-b4_U8S_FLlQL2JjWPrJnSc4bM"
-      ) shouldBe
-        Right(
-          RfpClaims(
-            iss = "issuer",
-            rfp = "rfp token",
-            aud = "audience",
-            exp = 1,
-            iat = -1
-          )
-        )
-    }
-
-    "reject JWT with invalid signature" in {
-
-      verifier.verifyAndExtractRfpClaims(
-        asBase64("""{"alg":"HS256","typ":"JWT"}""") + "." +
-          asBase64("""{"rfp":"rfp token","aud":"audience","iss":"issuer","iat":-1,"exp":1}""") + "." +
-          "c5XXfSQWRAIQ4RdyO-b4_U8S_FLlQL2JjWPrJnSc4b_"
-      ) shouldBe
-        Left(InvalidSignature)
     }
   }
 

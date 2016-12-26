@@ -4,7 +4,7 @@ object BaseSettings {
   lazy val defaultSettings = Seq(
     organization := "com.menzus",
 
-    scalaVersion := "2.12.0",
+    scalaVersion := "2.12.1",
 
     scalacOptions += "-feature",
     scalacOptions += "-deprecation",

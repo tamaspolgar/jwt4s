@@ -20,8 +20,6 @@ case class FailedToParseClaims(claims: String) extends Error
 
 case object NoSubClaimProvided extends Error
 
-case object NoRfpClaimProvided extends Error
-
 case object NoAudClaimProvided extends Error
 case class InvalidAudClaim(aud: String) extends Error
 
@@ -33,5 +31,7 @@ case class ExpiredExpClaim(exp: Long, current: Long) extends Error
 
 case object NoIatClaimProvided extends Error
 case class FutureIatClaim(iat: Long, current: Long) extends Error
+
+case object InvalidLifeTime extends Error
 
 case class FailedToParsePayload(payload: String) extends Error

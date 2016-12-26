@@ -5,20 +5,6 @@ import org.scalatest.WordSpec
 
 class SignerSpec extends WordSpec with Matchers {
 
-  "signRequestForgeryProtection" should {
-
-    "create a token for subject and roles" in {
-
-      signer.signRequestForgeryProtection("rfp token") shouldBe
-        Token(
-          idToken = "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9." +
-            "eyJpc3MiOiJpc3N1ZXIiLCJyZnAiOiJyZnAgdG9rZW4iLCJhdWQiOiJhdWRpZW5jZSIsImV4cCI6MSwiaWF0IjowfQ." +
-            "UaoPOsgyo_mDime7_Ddb1gUxKm49yaqUfUWIC2B2eF0",
-          expiresIn = 1
-        )
-    }
-  }
-
   "signSubject" should {
 
     "create a token for subject and roles" in {
