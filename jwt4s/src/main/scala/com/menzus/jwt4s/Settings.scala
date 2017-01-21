@@ -5,7 +5,6 @@ import com.menzus.jwt4s.internal.Algorithm.algHeaderToAlgorithm
 import com.menzus.jwt4s.internal.extractBytesFromBase64
 import com.typesafe.config.Config
 import com.typesafe.config.ConfigException.BadValue
-import com.typesafe.config.ConfigFactory
 
 import scala.collection.JavaConverters.asScalaBuffer
 
@@ -60,9 +59,8 @@ object VerifierSettings {
 }
 
 object Settings {
-  private val referenceConfig = ConfigFactory.load("reference.conf")
 
-  def jwtConfig(config: Config) = config.withFallback(referenceConfig).getConfig("jwt")
+  def jwtConfig(config: Config) = config.getConfig("jwt")
 
   def hmacSecretKey(jwtConfig: Config, path: String) = {
     extractBytesFromBase64(jwtConfig.getString(path))
