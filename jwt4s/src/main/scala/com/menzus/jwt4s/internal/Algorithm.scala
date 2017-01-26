@@ -1,5 +1,6 @@
 package com.menzus.jwt4s.internal
 
+import java.nio.charset.StandardCharsets
 import java.security.MessageDigest
 import javax.crypto.Mac
 import javax.crypto.spec.SecretKeySpec
@@ -55,7 +56,7 @@ sealed abstract class Hs(javaMacAlgName: String) extends Algorithm {
   }
 
   private def bytesFromUTF8String(string: String): Array[Byte] = {
-    string.getBytes(UTF8)
+    string.getBytes(StandardCharsets.UTF_8)
   }
 }
 

@@ -1,6 +1,6 @@
 package com.menzus.jwt4s
 
-import java.nio.charset.Charset
+import java.nio.charset.StandardCharsets
 import java.util.Base64
 
 import cats.syntax.EitherSyntax
@@ -15,10 +15,9 @@ package object internal extends EitherSyntax {
 
   val Base64Decoder = Base64.getUrlDecoder
   val Base64Encoder = Base64.getUrlEncoder.withoutPadding
-  val UTF8 = Charset.forName("UTF-8")
 
   def asBase64(string: String) = {
-    Base64Encoder.encodeToString(string.getBytes(UTF8))
+    Base64Encoder.encodeToString(string.getBytes(StandardCharsets.UTF_8))
   }
 
   def extractBytesFromBase64(base64String: String): Result[Array[Byte]] = {
@@ -28,6 +27,6 @@ package object internal extends EitherSyntax {
 
   def extractStringFromBase64(base64String: String): Result[String] = {
     extractBytesFromBase64(base64String)
-      .map(bytes => new String(bytes, UTF8))
+      .map(bytes => new String(bytes, StandardCharsets.UTF_8))
   }
 }
