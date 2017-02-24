@@ -2,9 +2,9 @@ import sbt.Keys._
 import sbt._
 
 private object Version {
-  val Akka           = "10.0.1"
+  val Akka           = "10.0.4"
   val Cats           = "0.8.1"
-  val Circe          = "0.6.1"
+  val Circe          = "0.7.0"
   val TypeSafeConfig = "1.3.1"
 
   val ScalaTest      = "3.0.1"
