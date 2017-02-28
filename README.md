@@ -47,12 +47,25 @@ The `tokenWithSubject` has a token where the payload is:
 
 ### Signer Settings
 The project uses typesafe config, reference config:
+```
+jwt {
+  # hmac-secret-key-base64 = "SECRET IN BASE64"
+  # audience = "YOUR AUDIENCE"
+  # issuer = "YOUR ISSUER"
+
+  signer {
+    # algorithm = "SIGNING ALGORITHM"
+
+    expires-in = 1 hour
+  }
+}
+```
+Where the values are:
 - jwt.hmac-secret-key-base64: the symmetric key
 - jwt.audience: the audience the JWT is for
 - jwt.issuer: the issuer of the JWT
 - jwt.signer.algorithm: the signing algorithm
 - jwt.signer.expires-in: the time period the token is valid for; default to 1 hour
-```
 
 # Verifies
 
