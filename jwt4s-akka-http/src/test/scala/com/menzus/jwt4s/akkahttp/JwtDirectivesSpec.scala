@@ -120,7 +120,7 @@ class JwtDirectivesSpec extends WordSpec with Matchers with ScalatestRouteTest {
     } ~
     path("authorized") {
       get {
-        JwtDirectives.authorize("role") { claims =>
+        JwtDirectives.authorizeRoles("role") { claims =>
           complete(claims.sub)
         }
       }

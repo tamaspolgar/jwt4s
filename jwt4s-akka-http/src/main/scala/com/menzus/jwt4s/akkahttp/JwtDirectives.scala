@@ -1,9 +1,7 @@
 package com.menzus.jwt4s.akkahttp
 
 import akka.http.scaladsl.server.AuthorizationFailedRejection
-import akka.http.scaladsl.server.Directive1
-import akka.http.scaladsl.server.Directives.provide
-import akka.http.scaladsl.server.Directives.reject
+import akka.http.scaladsl.server.Rejection
 import akka.http.scaladsl.server.Route
 import akka.http.scaladsl.server.directives.Credentials.Missing
 import akka.http.scaladsl.server.directives.Credentials.Provided
@@ -12,14 +10,18 @@ import com.menzus.jwt4s.Verifier
 import com.menzus.jwt4s.internal.Claims
 
 object JwtDirectives {
-
+// todo this returns a plain/text response, it would be nice to customize it, maybe with rejection handler
   def authenticate(f: Claims => Route)(implicit verifier: Verifier): Route = {
     authenticateDirective(verifier).apply(f)
   }
 
-  def authorize(roles: String*)(f: Claims => Route)(implicit verifier: Verifier): Route = {
+  def authorizeRoles(roles: String*)(f: Claims => Route)(implicit verifier: Verifier): Route = {
+    filter(rolesFilter(roles), AuthorizationFailedRejection)(f)
+  }
+
+  private def filter(predicate: Claims ⇒ Boolean, rejections: Rejection*)(f: Claims => Route)(implicit verifier: Verifier): Route = {
     authenticateDirective(verifier)
-      .flatMap(checkRoles(roles))
+      .filter(predicate, rejections: _*)
       .apply(f)
   }
 
@@ -36,11 +38,7 @@ object JwtDirectives {
     )
   }
 
-  private def checkRoles(roles: Seq[String])(claims: Claims): Directive1[Claims] = {
-    if (roles.forall(role => claims.roles.contains(role))) {
-      provide(claims)
-    } else {
-      reject(AuthorizationFailedRejection)
-    }
+  private def rolesFilter(roles: Seq[String])(claims: Claims): Boolean = {
+    roles.forall(role => claims.roles.contains(role))
   }
 }
